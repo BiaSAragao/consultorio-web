@@ -1,0 +1,225 @@
+body {
+    background-color: #D9D9D9;
+    margin: 0;
+    font-family: Arial, sans-serif;
+}
+
+header {
+    background-color: #c69963e0;
+    height: 60px; /* Ajuste a altura conforme necessário */
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+}
+
+nav.menu ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    gap: 20px;
+}
+
+nav.menu li a {
+    color: #000000;
+    text-decoration: none;
+    font-weight: bold;
+    padding: 10px 15px;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+}
+
+nav.menu li a:hover {
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+    color: #000000;
+    margin: 0;
+    font-size: 24px;
+}
+/* Estilos para a seção de Serviços */
+.servicos {
+    padding: 60px 20px;
+    text-align: center;
+    background-color: #D9D9D9; /* Fundo da seção de serviços */
+}
+
+.servicos h2 {
+    font-size: 36px;
+    color: #000000;
+    margin-bottom: 20px;
+}
+
+.servicos .introducao-servicos {
+    font-size: 18px;
+    color: #333333;
+    max-width: 800px;
+    margin: 0 auto 50px auto;
+    line-height: 1.6;
+}
+
+/* Novo layout com CSS Grid para a estrutura 2x2 */
+.cards-servicos-container {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* Cria duas colunas de tamanhos iguais */
+    gap: 30px; /* Espaço entre os cartões */
+    justify-content: center;
+    max-width: 1200px; /* Limita a largura do contêiner para não ficar muito grande */
+    margin: 0 auto; /* Centraliza o contêiner na página */
+}
+
+
+.card {
+    background-color: #FFFFFF; /* Cor de fundo dos cartões */
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    padding: 30px;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.card .icone {
+    background-color: #CAB078; /* Fundo do círculo do ícone */
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.card .icone img {
+    width: 30px; /* Tamanho do ícone dentro do círculo */
+    height: 30px;
+}
+
+.card h3 {
+    font-size: 22px;
+    color: #000000;
+    margin-top: 0;
+    margin-bottom: 15px;
+}
+
+.card p {
+    font-size: 16px;
+    color: #555555;
+    line-height: 1.5;
+    margin-bottom: 20px;
+}
+
+.card ul {
+    list-style: none; /* Remove os marcadores padrão da lista */
+    padding: 0;
+    margin-top: 0;
+}
+
+.card ul li {
+    font-size: 15px;
+    color: #555555;
+    margin-bottom: 10px;
+    position: relative;
+    padding-left: 20px; /* Espaço para o "bullet" personalizado */
+}
+
+.card ul li::before {
+    content: "•"; /* Adiciona um bullet customizado */
+    color: #CAB078; /* Cor do bullet */
+    font-size: 1.2em;
+    position: absolute;
+    left: 0;
+    top: -2px;
+}
+
+/* Responsividade para telas menores */
+@media (max-width: 768px) {
+    .cards-servicos-container {
+        grid-template-columns: 1fr; /* Em telas menores, os cartões ficam um abaixo do outro */
+    }
+}
+
+.home-conteudo {
+    /* Define o container como grid */
+    display: grid;
+    /* Cria duas colunas de tamanhos iguais */
+    grid-template-columns: 1fr 1fr;
+    /* Adiciona um espaço de 30px entre o texto e a imagem */
+    gap: 30px;
+    /* Alinha os itens verticalmente ao centro */
+    align-items: center;
+}
+
+.home-imagem {
+    /* Garante que a imagem se ajuste ao container */
+    max-width: 100%;
+}
+
+.home-imagem img {
+    /* Garante que a imagem seja responsiva */
+    max-width: 100%;
+    /* Permite que a imagem se ajuste ao seu container */
+    height: auto;
+    /* Adiciona bordas arredondadas, se desejar */
+    border-radius: 10px;
+    /* Faz com que a imagem ocupe 100% da largura do seu container */
+    width: 100%;
+    /* Garante que a imagem não distorça ao ser redimensionada */
+    object-fit: cover;
+}
+
+/* Media query para telas menores (ex: celulares) */
+@media (max-width: 768px) {
+    .home-conteudo {
+        /* Muda o layout para ter uma única coluna */
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Adiciona espaçamento vertical à seção inteira para afastar do menu */
+.bem-vindo {
+    padding-top: 80px;
+    padding-bottom: 60px;
+}
+
+/* Centraliza o container do texto e imagem e limita sua largura */
+.home-conteudo {
+    max-width: 1200px;
+    margin: 0 auto;
+    /* ... seu código grid já existente ... */
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    align-items: center;
+}
+
+/* Melhora a legibilidade do texto e o espaçamento */
+.home-texto h1,
+.home-texto h2 {
+    /* Alinha o texto à esquerda, se ainda estiver centralizado */
+    text-align: left;
+    margin-bottom: 20px; /* Adiciona espaço abaixo dos títulos */
+}
+
+.home-texto p {
+    line-height: 1.6; /* Aumenta o espaçamento entre as linhas */
+    margin-bottom: 20px; /* Adiciona espaço abaixo de cada parágrafo */
+}
+
+.home-texto ul {
+    list-style: none;
+    padding-left: 0;
+}
+
+.home-texto ul li {
+    margin-bottom: 10px; /* Adiciona espaço entre os itens da lista */
+    line-height: 1.4;
+}
+
+/* Adiciona um padding interno à coluna de texto para não ficar colado */
+.home-texto {
+    padding: 20px;
+}

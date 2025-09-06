@@ -4,7 +4,7 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Clínica Odontológica</title>
-        <link rel="stylesheet" href="styles.css">
+        <link rel="stylesheet" href="home.css">
     </head>
     <body>
         <header>
@@ -13,27 +13,124 @@
 
             <nav class="menu">
                 <ul>
-                    <li><a href="index.html">Home</a></li>
-                    <li><a href="servicos.html">Serviços</a></li>
-                    <li><a href="consultas.html">Serviços</a></li>
-                    <li><a href="contatos.html">Contatos</a></li>
+                    <li><a href="#home">Home</a></li> 
+                    <li><a href="#servicos">Serviços</a></li>
+                    <li><a href="#consultas">Consultas</a></li>
+                    <li><a href="#contatos">Contatos</a></li>
                 </ul>
             </nav>
         </header>
 
         <main>
-            <section class="bem-vindo">
-                <h1>Bem-vindo à Nossa Clínica Odontológica - SmileUp</h1>
-                <p>Oferecemos atendimento especializado para toda a família.</p>
-            </section>
+           <section class="bem-vindo" id="home">
+    <div class="home-conteudo">
+       <div class="home-texto">
+            <h1>Bem vindo a Smile UP!Seu sorriso é nossa prioridade</h1>
+            <p>Oferecemos tratamentos odontológicos de excelência com tecnologia moderna e atendimento humanizado. Cuidamos da saúde do seu sorriso com carinho e profissionalismo.</p>
 
-            <section class="acesso">
-                <h2>Acesse sua conta</h2>
-                <div class="botoes-acesso">
-                    <a href="login.html" class="btn">Login</a>
-                    <a href="cadastro.html" class="btn">Cadastro</a>
-                </div>
+            <h2>Nossa Filosofia</h2>
+            <p>Acreditamos que cada sorriso é único e merece cuidado especializado. Nossa missão é proporcionar tratamentos odontológicos de excelência, combinando tecnologia avançada com atendimento humanizado e personalizado.</p>
+            <p>Trabalhamos com uma equipe multidisciplinar de especialistas, sempre em constante atualização, para oferecer o que há de mais moderno em odontologia.</p>
+            
+            <ul class="filosofia-lista">
+                <li><strong>Missão:</strong> Transformar sorrisos e melhorar a qualidade de vida dos nossos pacientes.</li>
+                <li><strong>Visão:</strong> Ser referência em odontologia de qualidade e atendimento humanizado.</li>
+                <li><strong>Valores:</strong> Ética, excelência, inovação e cuidado com pessoas.</li>
+            </ul>
+        </div>
+        <div class="home-imagem">
+            <img src="imagemclinica.jpg" alt="Clínica Odontológica">
+        </div>
+    </div>
+</section>
+
+            <section class="servicos" id="servicos">
+                <h2>Nossos Serviços</h2>
+                <p>Aqui você pode listar todos os tratamentos que a clínica oferece.</p>
+                
+    
+     <div class="cards-servicos-container">
+        <div class="card">
+            <div class="icone">
+                <img src="icone-limpeza.svg" alt="Ícone de Limpeza"> 
+            </div>
+            <h3>Limpeza e Prevenção</h3>
+            <p>Limpeza profissional, aplicação de flúor e orientações de higiene bucal.</p>
+            <ul>
+                <li>Profilaxia</li>
+                <li>Remoção de tártaro</li>
+                <li>Aplicação de flúor</li>
+                <li>Orientação de escovação</li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <div class="icone">
+                <img src="icone-clinica-geral.svg" alt="Ícone de Clínica Geral">
+            </div>
+            <h3>Clínica Geral</h3>
+            <p>Tratamentos básicos como restaurações, extrações e check-ups regulares.</p>
+            <ul>
+                <li>Restaurações</li>
+                <li>Extrações</li>
+                <li>Check-ups</li>
+                <li>Diagnósticos</li>
+            </ul>
+        </div>
+        
+        <div class="card">
+            <div class="icone">
+                <img src="icone-estetica.svg" alt="Ícone de Estética Dental">
+            </div>
+            <h3>Estética Dental</h3>
+            <p>Clareamento, facetas e tratamentos para um sorriso mais bonito.</p>
+            <ul>
+                <li>Clareamento</li>
+                <li>Facetas</li>
+                <li>Restaurações estéticas</li>
+                <li>Design do sorriso</li>
+            </ul>
+        </div>
+        
+        <div class="card">
+            <div class="icone">
+                <img src="icone-endodontia.svg" alt="Ícone de Endodontia">
+            </div>
+            <h3>Endodontia</h3>
+            <p>Tratamento de canal com tecnologia moderna e menos desconforto.</p>
+            <ul>
+                <li>Tratamento de canal</li>
+                <li>Retratamento</li>
+            </ul>
+        </div>
+        
+        <div class="card">
+            <div class="icone">
+                <img src="icone-odontopediatria.svg" alt="Ícone de Odontopediatria">
+            </div>
+            <h3>Odontopediatria</h3>
+            <p>Cuidados especializados para a saúde bucal das crianças.</p>
+            <ul>
+                <li>Primeira consulta</li>
+                <li>Prevenção</li>
+            </ul>
+        </div>
+    </div>
             </section>
+            
+           <section class="consultas" id="consultas">
+        <h2>Marcar Consulta</h2>
+        <p>Para marcar sua consulta, faça login ou cadastre-se para criar sua conta.</p>
+        <div class="botoes-acesso">
+            <a href="login.html" class="btn">Login</a>
+            <a href="cadastro.html" class="btn">Cadastro</a>
+        </div>
+    </section>
+
+    <section class="contatos" id="contatos">
+        <h2>Entre em Contato</h2>
+        <p>Informações de contato, como telefone, e-mail e endereço.</p>
+    </section>
 
         </main>
 
