@@ -1,143 +1,345 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Clínica Odontológica</title>
-        <link rel="stylesheet" href="home.css">
-    </head>
-    <body>
-        <header>
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Clínica Odontológica</title>
+		<link rel="stylesheet" href="home.css" />
+		<link
+			rel="preconnect"
+			href="https://fonts.googleapis.com"
+		/>
+		<link
+			rel="preconnect"
+			href="https://fonts.gstatic.com"
+			crossorigin
+		/>
+		<link
+			href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+			rel="stylesheet"
+		/>
+	</head>
+	<body>
+		<header class="header">
+			<h1 class="logo">SmileUp</h1>
+			<nav class="nav">
+				<ul class="nav-list">
+					<li>
+						<a
+							href="#home"
+							class="nav-link"
+							>Home</a
+						>
+					</li>
+					<li>
+						<a
+							href="#servicos"
+							class="nav-link"
+							>Serviços</a
+						>
+					</li>
+					<li>
+						<a
+							href="#consultas"
+							class="nav-link"
+							>Consultas</a
+						>
+					</li>
+					<li>
+						<a
+							href="#contatos"
+							class="nav-link"
+							>Contatos</a
+						>
+					</li>
+                     <li>
+            <a href="login-dentista.html" class="nav-link">Sou Dentista</a>
+        </li>
+				</ul>
+			</nav>
+			<button class="menu-button">&#9776;</button>
+		</header>
 
-            <h1>SmileUp</h1>
+		<main class="main-container">
+			<section
+				class="section-container"
+				id="home"
+			>
+				<div class="clearfix">
+					<img
+						src="imagemclinica.jpg"
+						alt="Clínica Odontológica"
+						class="home-image"
+						onerror="this.onerror=null;this.src='https://placehold.co/600x400/cab078/333333?text=Imagem+indisponível'"
+					/>
 
-            <nav class="menu">
-                <ul>
-                    <li><a href="#home">Home</a></li> 
-                    <li><a href="#servicos">Serviços</a></li>
-                    <li><a href="#consultas">Consultas</a></li>
-                    <li><a href="#contatos">Contatos</a></li>
-                </ul>
-            </nav>
-        </header>
+					<h1 class="main-title">
+						Bem vindo à Smile Up! Seu sorriso é nossa prioridade
+					</h1>
+					<p class="main-text">
+						Oferecemos tratamentos odontológicos de excelência
+						com tecnologia moderna e atendimento humanizado.
+						Cuidamos da saúde do seu sorriso com carinho e
+						profissionalismo.
+					</p>
 
-        <main>
-           <section class="bem-vindo" id="home">
-    <div class="home-conteudo">
-       <div class="home-texto">
-            <h1>Bem vindo a Smile UP!Seu sorriso é nossa prioridade</h1>
-            <p>Oferecemos tratamentos odontológicos de excelência com tecnologia moderna e atendimento humanizado. Cuidamos da saúde do seu sorriso com carinho e profissionalismo.</p>
+					<h2 class="section-title">Nossa Filosofia</h2>
+					<p class="section-text">
+						Acreditamos que cada sorriso é único e merece
+						cuidado especializado. Nossa missão é proporcionar
+						tratamentos odontológicos de excelência, combinando
+						tecnologia avançada com atendimento humanizado e
+						personalizado.
+					</p>
+					<ul class="styled-list">
+						<li class="list-item">
+							<span class="bullet-point">&#8226;</span>
+							<strong class="list-item-strong">Missão:</strong> Transformar sorrisos e
+							melhorar a qualidade de vida dos nossos pacientes.
+						</li>
+						<li class="list-item">
+							<span class="bullet-point">&#8226;</span>
+							<strong class="list-item-strong">Visão:</strong> Ser referência em
+							odontologia de qualidade e atendimento humanizado.
+						</li>
+						<li class="list-item">
+							<span class="bullet-point">&#8226;</span>
+							<strong class="list-item-strong">Valores:</strong> Ética, excelência,
+							inovação e cuidado com pessoas.
+						</li>
+					</ul>
+				</div>
+			</section>
 
-            <h2>Nossa Filosofia</h2>
-            <p>Acreditamos que cada sorriso é único e merece cuidado especializado. Nossa missão é proporcionar tratamentos odontológicos de excelência, combinando tecnologia avançada com atendimento humanizado e personalizado.</p>
-            <p>Trabalhamos com uma equipe multidisciplinar de especialistas, sempre em constante atualização, para oferecer o que há de mais moderno em odontologia.</p>
-            
-            <ul class="filosofia-lista">
-                <li><strong>Missão:</strong> Transformar sorrisos e melhorar a qualidade de vida dos nossos pacientes.</li>
-                <li><strong>Visão:</strong> Ser referência em odontologia de qualidade e atendimento humanizado.</li>
-                <li><strong>Valores:</strong> Ética, excelência, inovação e cuidado com pessoas.</li>
-            </ul>
-        </div>
-        <div class="home-imagem">
-            <img src="imagemclinica.jpg" alt="Clínica Odontológica">
-        </div>
-    </div>
-</section>
+			<section class="services-section" id="servicos">
+				<h2 class="services-title">Nossos Serviços</h2>
+				<p class="services-text">
+					Aqui você pode listar todos os tratamentos que a clínica
+					oferece, de limpeza e prevenção a tratamentos estéticos.
+				</p>
 
-            <section class="servicos" id="servicos">
-                <h2>Nossos Serviços</h2>
-                <p>Aqui você pode listar todos os tratamentos que a clínica oferece.</p>
-                
-    
-     <div class="cards-servicos-container">
-        <div class="card">
-            <div class="icone">
-                <img src="icone-limpeza.svg" alt="Ícone de Limpeza"> 
-            </div>
-            <h3>Limpeza e Prevenção</h3>
-            <p>Limpeza profissional, aplicação de flúor e orientações de higiene bucal.</p>
-            <ul>
-                <li>Profilaxia</li>
-                <li>Remoção de tártaro</li>
-                <li>Aplicação de flúor</li>
-                <li>Orientação de escovação</li>
-            </ul>
-        </div>
+				<div class="services-grid">
+					<!-- Card de Serviço 1 -->
+					<div class="service-card">
+						<div class="icon-container">
+							<svg class="service-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="2"
+									d="M14 10H6v8h8V10zm2-4h8v8h-8V6zm-6 0v2h2V6H10z"
+								/>
+							</svg>
+						</div>
+						<h3 class="card-title">Limpeza e Prevenção</h3>
+						<p class="card-text">
+							Limpeza profissional, aplicação de flúor e
+							orientações de higiene bucal para manter seu sorriso saudável.
+						</p>
+						<ul class="card-list">
+							<li class="card-list-item">
+								<span class="bullet-point">&#8226;</span>
+								Profilaxia
+							</li>
+							<li class="card-list-item">
+								<span class="bullet-point">&#8226;</span>
+								Remoção de tártaro
+							</li>
+							<li class="card-list-item">
+								<span class="bullet-point">&#8226;</span>
+								Aplicação de flúor
+							</li>
+						</ul>
+					</div>
 
-        <div class="card">
-            <div class="icone">
-                <img src="icone-clinica-geral.svg" alt="Ícone de Clínica Geral">
-            </div>
-            <h3>Clínica Geral</h3>
-            <p>Tratamentos básicos como restaurações, extrações e check-ups regulares.</p>
-            <ul>
-                <li>Restaurações</li>
-                <li>Extrações</li>
-                <li>Check-ups</li>
-                <li>Diagnósticos</li>
-            </ul>
-        </div>
-        
-        <div class="card">
-            <div class="icone">
-                <img src="icone-estetica.svg" alt="Ícone de Estética Dental">
-            </div>
-            <h3>Estética Dental</h3>
-            <p>Clareamento, facetas e tratamentos para um sorriso mais bonito.</p>
-            <ul>
-                <li>Clareamento</li>
-                <li>Facetas</li>
-                <li>Restaurações estéticas</li>
-                <li>Design do sorriso</li>
-            </ul>
-        </div>
-        
-        <div class="card">
-            <div class="icone">
-                <img src="icone-endodontia.svg" alt="Ícone de Endodontia">
-            </div>
-            <h3>Endodontia</h3>
-            <p>Tratamento de canal com tecnologia moderna e menos desconforto.</p>
-            <ul>
-                <li>Tratamento de canal</li>
-                <li>Retratamento</li>
-            </ul>
-        </div>
-        
-        <div class="card">
-            <div class="icone">
-                <img src="icone-odontopediatria.svg" alt="Ícone de Odontopediatria">
-            </div>
-            <h3>Odontopediatria</h3>
-            <p>Cuidados especializados para a saúde bucal das crianças.</p>
-            <ul>
-                <li>Primeira consulta</li>
-                <li>Prevenção</li>
-            </ul>
-        </div>
-    </div>
-            </section>
-            
-           <section class="consultas" id="consultas">
-        <h2>Marcar Consulta</h2>
-        <p>Para marcar sua consulta, faça login ou cadastre-se para criar sua conta.</p>
-        <div class="botoes-acesso">
-            <a href="login.html" class="btn">Login</a>
-            <a href="cadastro.html" class="btn">Cadastro</a>
-        </div>
-    </section>
+					<!-- Card de Serviço 2 -->
+					<div class="service-card">
+						<div class="icon-container">
+							<svg class="service-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="2"
+									d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M18 14h.01"
+								/>
+							</svg>
+						</div>
+						<h3 class="card-title">Estética Dental</h3>
+						<p class="card-text">
+							Clareamento, facetas e tratamentos para um sorriso
+							mais bonito e confiante.
+						</p>
+						<ul class="card-list">
+							<li class="card-list-item">
+								<span class="bullet-point">&#8226;</span>
+								Clareamento
+							</li>
+							<li class="card-list-item">
+								<span class="bullet-point">&#8226;</span>
+								Facetas de porcelana
+							</li>
+							<li class="card-list-item">
+								<span class="bullet-point">&#8226;</span>
+								Restaurações estéticas
+							</li>
+						</ul>
+					</div>
 
-    <section class="contatos" id="contatos">
-        <h2>Entre em Contato</h2>
-        <p>Informações de contato, como telefone, e-mail e endereço.</p>
-    </section>
+					<!-- Card de Serviço 3 -->
+					<div class="service-card">
+						<div class="icon-container">
+							<svg class="service-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="2"
+									d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"
+								/>
+								<circle cx="9" cy="7" r="4" />
+								<path d="M23 21v-2a4 4 0 00-3-3.87m-4-1.29V3.5a1.5 1.5 0 011.5-1.5h1A1.5 1.5 0 0120 3.5v1.44M10 5a2 2 0 100-4 2 2 0 000 4z" />
+							</svg>
+						</div>
+						<h3 class="card-title">Odontopediatria</h3>
+						<p class="card-text">
+							Cuidados especializados para a saúde bucal das
+							crianças em um ambiente acolhedor e divertido.
+						</p>
+						<ul class="card-list">
+							<li class="card-list-item">
+								<span class="bullet-point">&#8226;</span>
+								Primeira consulta
+							</li>
+							<li class="card-list-item">
+								<span class="bullet-point">&#8226;</span>
+								Tratamento preventivo
+							</li>
+						</ul>
+					</div>
+					
+					<!-- Card de Serviço 4 -->
+					<div class="service-card">
+						<div class="icon-container">
+							<svg class="service-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="2"
+									d="M12 21a9 9 0 01-9-9c0-4.04 2.87-7.44 6.67-8.3M21 12a9 9 0 01-9 9m0-18a9 9 0 019 9m-9 9V3"
+								/>
+							</svg>
+						</div>
+						<h3 class="card-title">Endodontia</h3>
+						<p class="card-text">
+							Tratamento de canal com tecnologia moderna e
+							abordagem menos invasiva para seu conforto.
+						</p>
+						<ul class="card-list">
+							<li class="card-list-item">
+								<span class="bullet-point">&#8226;</span>
+								Tratamento de canal
+							</li>
+							<li class="card-list-item">
+								<span class="bullet-point">&#8226;</span>
+								Retratamento endodôntico
+							</li>
+						</ul>
+					</div>
 
-        </main>
+					<!-- Card de Serviço 5 -->
+					<div class="service-card">
+						<div class="icon-container">
+							<svg class="service-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="2"
+									d="M12 20s8-4 8-10A8 8 0 0012 2a8 8 0 00-8 8c0 6 8 10 8 10z"
+								/>
+								<circle cx="12" cy="10" r="3" />
+							</svg>
+						</div>
+						<h3 class="card-title">Implantes Dentários</h3>
+						<p class="card-text">
+							Soluções permanentes para repor dentes perdidos, restaurando a função e a estética do sorriso.
+						</p>
+						<ul class="card-list">
+							<li class="card-list-item">
+								<span class="bullet-point">&#8226;</span>
+								Implantes unitários
+							</li>
+							<li class="card-list-item">
+								<span class="bullet-point">&#8226;</span>
+								Protocolo de carga imediata
+							</li>
+						</ul>
+					</div>
+					
+					<!-- Card de Serviço 6 -->
+					<div class="service-card">
+						<div class="icon-container">
+							<svg class="service-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="2"
+									d="M12 21a9 9 0 01-9-9c0-4.04 2.87-7.44 6.67-8.3M21 12a9 9 0 01-9 9m0-18a9 9 0 019 9m-9 9V3"
+								/>
+							</svg>
+						</div>
+						<h3 class="card-title">Ortodontia</h3>
+						<p class="card-text">
+							Alinhamento dos dentes e correção da mordida para um sorriso mais harmonioso.
+						</p>
+						<ul class="card-list">
+							<li class="card-list-item">
+								<span class="bullet-point">&#8226;</span>
+								Aparelhos fixos
+							</li>
+							<li class="card-list-item">
+								<span class="bullet-point">&#8226;</span>
+								Alinhadores transparentes
+							</li>
+						</ul>
+					</div>
 
-        <footer>
-            <p>&copy; 2025 Clínica Odontológica. Todos os direitos reservados.</p>
-        </footer>
+				</div>
+			</section>
 
+			<section
+				class="section-container text-center"
+				id="consultas"
+			>
+				<h2 class="section-title-alt section-header-center">Marque sua Consulta</h2>
+				<p class="section-text-alt">
+					Para agendar sua consulta online, faça login ou crie sua conta para ter acesso ao nosso sistema.
+				</p>
+				<div class="button-group">
+					<a
+						href="login.html"
+						class="btn-primary"
+						>Login</a
+					>
+					<a
+						href="cadastro.html"
+						class="btn-secondary"
+						>Cadastro</a
+					>
+				</div>
+			</section>
+
+			<section class="section-container text-center" id="contatos">
+				<h2 class="section-title-alt section-header-center">Entre em Contato</h2>
+				<p class="section-text-alt">
+					Estamos prontos para te atender. Entre em contato por telefone, email ou visite-nos em nosso endereço.
+				</p>
+			</section>
+		</main>
+
+		<footer class="footer">
+			<p>
+				&copy; 2025 Clínica Odontológica. Todos os direitos reservados.
+			</p>
+		</footer>
         <script src="script.js"></script>
-    </body> 
+	</body>
 </html>
