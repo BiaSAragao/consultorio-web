@@ -1,14 +1,15 @@
-// backend/conexao.php
 <?php
-$host = 'localhost';
-$dbname = 'consultorio_db'; // O nome que a gente vai dar ao banco banco
-$user = 'root';
-$pass = '';
+$host = getenv('DB_HOST');
+$port = getenv('DB_PORT');
+$dbname = getenv('DB_NAME');
+$user = getenv('DB_USER');
+$pass = getenv('DB_PASS');
 
 try {
-    $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8", $user, $pass);
+    $dsn = "pgsql:host=$host;port=$port;dbname=$dbname;sslmode=require";
+    $pdo = new PDO($dsn, $user, $pass);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 } catch (PDOException $e) {
-    die("Erro ao conectar: " . $e->getMessage());
+    die("❌ Erro ao conectar: " . $e->getMessage());
 }
-?>
+
