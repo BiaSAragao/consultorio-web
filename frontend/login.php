@@ -1,54 +1,38 @@
 <?php
 // frontend/login.php
 
-// Inicia a sessão. É essencial para guardar a informação de que o usuário está logado.
-session_start();
+session_start(); // Inicia a sessão
+$erro = null;
 
-// Inicia a variável de erro como nula. Ela só terá valor se o login falhar.
-$erro = null; 
-
-// PASSO 1: VERIFICAR SE O FORMULÁRIO FOI ENVIADO
-// O código dentro deste 'if' só executa quando o usuário clica no botão "Entrar".
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    require '../backend/conexao.php'; // Conexão com o banco
 
-    // Inclui o arquivo de conexão com o banco de dados
-    require '../backend/conexao.php'; 
-
-    // Pega o email e a senha que o usuário digitou no formulário
     $email = $_POST['email'];
     $senha = $_POST['senha'];
 
     try {
-        // PASSO 2: BUSCAR O USUÁRIO NO BANCO DE DADOS
-        // Prepara a consulta SQL para encontrar um paciente com o email fornecido
-        $stmt = $pdo->prepare("SELECT id, nome, senha FROM pacientes WHERE email = ?");
+        // Buscar o usuário na tabela 'usuario'
+        $stmt = $pdo->prepare("SELECT usuario_id, nome, senha FROM usuario WHERE email = ?");
         $stmt->execute([$email]);
-        $paciente = $stmt->fetch(PDO::FETCH_ASSOC);
+        $usuario = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        // PASSO 3: VERIFICAR A SENHA E REDIRECIONAR
-        // Se encontrou um paciente E a senha digitada corresponde à senha criptografada no banco...
-        if ($paciente && password_verify($senha, $paciente['senha'])) {
-            
-            // Sucesso! Guarda os dados do paciente na sessão (a "pulseira VIP")
-            $_SESSION['usuario_id'] = $paciente['id'];
-            $_SESSION['usuario_nome'] = $paciente['nome'];
-            
-            // Redireciona o usuário para o seu painel protegido
+        if ($usuario && password_verify($senha, $usuario['senha'])) {
+            // Login bem-sucedido
+            $_SESSION['usuario_id'] = $usuario['usuario_id'];
+            $_SESSION['usuario_nome'] = $usuario['nome'];
+
             header("Location: dashboard-paciente.php");
-            exit(); // Encerra o script aqui para garantir o redirecionamento
-
+            exit();
         } else {
-            // Se o usuário não foi encontrado ou a senha está errada...
-            // Define a mensagem de erro que será exibida no formulário.
             $erro = "E-mail ou senha inválidos. Por favor, tente novamente.";
         }
 
     } catch (PDOException $e) {
-        // Se houver um erro de conexão com o banco, define uma mensagem de erro.
         $erro = "Ocorreu uma falha no sistema. Tente mais tarde.";
     }
 }
 ?>
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -56,7 +40,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <title>Login - SmileUp</title>
     <link rel="stylesheet" href="home.css">
     <style>
-        /* Você pode colocar este estilo no seu arquivo styles.css */
         .erro {
             color: #D8000C;
             background-color: #FFBABA;
@@ -72,14 +55,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <form id="form-login-paciente" action="login.php" method="POST">
         <h1>Faça seu login</h1>
 
-        <div id="mensagem-erro-login-paciente" class="erro-js" style="display: none;"></div>
-
-
         <?php
-        // PASSO 4: EXIBIR A MENSAGEM DE ERRO (SE ELA EXISTIR)
-        // Este pequeno bloco PHP verifica se a variável $erro tem algum conteúdo.
-        // Se tiver, ele exibe a mensagem de erro para o usuário.
-        if (isset($erro)) {
+        if ($erro) {
             echo "<p class='erro'>$erro</p>";
         }
         ?>
