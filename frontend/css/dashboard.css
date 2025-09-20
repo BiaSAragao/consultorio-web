@@ -1,0 +1,148 @@
+/* frontend/css/dashboard.css */
+
+/* Estilos para o formulário de agendamento */
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+@media (min-width: 768px) {
+    .form-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    font-weight: 600; /* semibold */
+    color: #374151; /* gray-700 */
+    margin-bottom: 0.5rem;
+}
+
+.form-group input[type="date"],
+.form-group select {
+    padding: 0.75rem;
+    border: 1px solid #d1d5db; /* gray-300 */
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    background-color: #f9fafb; /* gray-50 */
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.form-group input[type="date"]:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: #cab078;
+    box-shadow: 0 0 0 3px rgba(202, 176, 120, 0.3);
+}
+
+/* Estilos para a seção de horários */
+.horarios-disponiveis {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.horario-item {
+    background-color: #fff;
+    border: 2px solid #cab078;
+    color: #cab078;
+    padding: 0.5rem 1rem;
+    border-radius: 9999px; /* rounded-full */
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.horario-item:hover {
+    background-color: #f3e9d8;
+}
+
+.horario-item.selected {
+    background-color: #cab078;
+    color: #fff;
+}
+
+/* Estilos para a Tabela de Consultas */
+.tabela-consultas {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1.5rem;
+}
+
+.tabela-consultas th,
+.tabela-consultas td {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid #e5e7eb; /* gray-200 */
+}
+
+.tabela-consultas thead th {
+    font-weight: 700; /* bold */
+    color: #1f2937; /* gray-800 */
+    background-color: #f9fafb; /* gray-50 */
+}
+
+.tabela-consultas tbody tr:hover {
+    background-color: #f3f4f6; /* gray-100 */
+}
+
+/* Emblemas de Status */
+.status {
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px; /* rounded-full */
+    font-size: 0.875rem; /* sm */
+    font-weight: 600; /* semibold */
+    display: inline-block;
+}
+
+.status-confirmada {
+    background-color: #d1fae5; /* green-100 */
+    color: #065f46; /* green-800 */
+}
+
+.status-pendente {
+    background-color: #fef3c7; /* amber-100 */
+    color: #92400e; /* amber-800 */
+}
+
+.status-cancelada {
+    background-color: #fee2e2; /* red-100 */
+    color: #991b1b; /* red-800 */
+}
+
+/* Botões de Ação na Tabela */
+.btn-tabela {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.3s ease;
+}
+
+.btn-tabela:hover {
+    opacity: 0.8;
+}
+
+.btn-cancelar {
+    background-color: #ef4444; /* red-500 */
+    color: #fff;
+    margin-left: 0.5rem;
+}
+
+.mensagem-vazia {
+    text-align: center;
+    padding: 2rem;
+    background-color: #f9fafb; /* gray-50 */
+    border-radius: 0.75rem;
+    color: #6b7280; /* gray-500 */
+    margin-top: 1.5rem;
+}
