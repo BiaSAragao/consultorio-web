@@ -46,6 +46,12 @@ $servicos = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
         <label for="observacoes">Observações:</label><br>
         <textarea id="observacoes" name="observacoes" placeholder="Digite aqui..."></textarea><br><br>
 
+        <label for="historico">Histórico:</label>
+        <textarea id="historico" name="historico" placeholder="Seu histórico odontológico"></textarea><br><br>
+
+        <label for="alergias">Alergias:</label>
+        <textarea id="alergias" name="alergias" placeholder="Informe alergias, se houver"></textarea><br><br>
+
         <!-- Info -->
         <p><strong>O valor total será calculado automaticamente.</strong></p>
 

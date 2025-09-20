@@ -32,7 +32,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $usuario_paciente,
         $usuario_dentista,
         $valor_total,
-        json_encode(["obs" => $observacoes])
+        json_encode([
+            "observacoes" => $observacoes,
+            "historico" => $historico,
+            "alergias" => $alergias
+        ])
     ]);
 
     // pegar o id da consulta criada
