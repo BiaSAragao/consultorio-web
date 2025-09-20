@@ -1,5 +1,5 @@
 <?php
-require_once "conexao.php";
+require_once "../backend/conexao.php";
 session_start();
 
 // garante que só entra quem está logado
