@@ -33,7 +33,7 @@ $nome_paciente = $_SESSION['usuario_nome'];
         <nav class="nav">
             <ul class="nav-list">
                 <li><a href="#" class="nav-link">Minhas Consultas</a></li>
-                <li><a href="#" class="agendar_consulta.php">Agendar Consulta</a></li>
+                <li><a href="agendar_consulta.php" class="nav-link">Agendar Consulta</a></li>
                 <li><a href="../backend/logout.php" class="nav-link">Sair</a></li>
             </ul>
         </nav>
