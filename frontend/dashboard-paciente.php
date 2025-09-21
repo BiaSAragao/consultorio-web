@@ -20,16 +20,25 @@ include 'templates/header.php';
 
 // Buscar consultas do paciente logado
 $stmt = $pdo->prepare("
-    SELECT c.consulta_id, c.data, c.hora, c.valor, c.observacoes,
-           u.nome AS dentista_nome
+    SELECT c.consulta_id, c.data, c.hora, c.valor, c.observacoes
     FROM consulta c
-    JOIN dentista d ON c.usuario_dentista = d.usuario_id
-    JOIN usuario u ON d.usuario_id = u.usuario_id
     WHERE c.usuario_paciente = ?
     ORDER BY c.data, c.hora
 ");
 $stmt->execute([$usuario_id]);
 $consultas = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Função para buscar serviços de cada consulta
+function buscarServicos($pdo, $consulta_id) {
+    $stmt = $pdo->prepare("
+        SELECT s.nome_servico
+        FROM consulta_servico cs
+        JOIN servico s ON cs.servico_id = s.servico_id
+        WHERE cs.consulta_id = ?
+    ");
+    $stmt->execute([$consulta_id]);
+    return $stmt->fetchAll(PDO::FETCH_COLUMN);
+}
 ?>
 
 <main class="main-container">
@@ -48,10 +57,10 @@ $consultas = $stmt->fetchAll(PDO::FETCH_ASSOC);
             <table class="tabela-consultas">
                 <thead>
                     <tr>
-                        <th>Profissional</th>
                         <th>Data / Hora</th>
                         <th>Valor</th>
                         <th>Observações</th>
+                        <th>Serviços</th>
                         <th>Ações</th>
                     </tr>
                 </thead>
@@ -59,7 +68,6 @@ $consultas = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <?php if (count($consultas) > 0): ?>
                         <?php foreach ($consultas as $c): ?>
                             <tr>
-                                <td><?php echo htmlspecialchars($c['dentista_nome']); ?></td>
                                 <td>
                                     <?php 
                                         echo date("d/m/Y", strtotime($c['data'])) . 
@@ -74,8 +82,15 @@ $consultas = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                     ?>
                                 </td>
                                 <td>
-                                    <a href="editar_consulta.php?id=<?php echo $c['consulta_id']; ?>" class="btn-tabela btn-secondary">Editar</a>
-                                    <a href="../backend/excluir_consulta.php?id=<?php echo $c['consulta_id']; ?>" class="btn-tabela btn-cancelar" onclick="return confirm('Tem certeza que deseja cancelar esta consulta?')">Cancelar</a>
+                                    <?php 
+                                        $servicos = buscarServicos($pdo, $c['consulta_id']);
+                                        echo htmlspecialchars(implode(', ', $servicos));
+                                    ?>
+                                </td>
+                                <td>
+                                    <a href="../backend/excluir_consulta.php?id=<?php echo $c['consulta_id']; ?>" 
+                                       class="btn-tabela btn-cancelar" 
+                                       onclick="return confirm('Tem certeza que deseja cancelar esta consulta?')">Cancelar</a>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -87,55 +102,9 @@ $consultas = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 </tbody>
             </table>
         </div>
-    </section>
 
-    <section id="agendar" class="section-container">
-        <h2 class="section-title">Agendar Nova Consulta</h2>
-        <form action="agendar_consulta.php" method="POST">
-            <div class="form-grid">
-                <div class="form-group">
-                    <label for="data">Data da Consulta</label>
-                    <input type="date" id="data" name="data" required>
-                </div>
-                <div class="form-group">
-                    <label for="hora">Hora</label>
-                    <input type="time" id="hora" name="hora" required>
-                </div>
-                <div class="form-group">
-                    <label for="observacoes">Observações</label>
-                    <textarea id="observacoes" name="observacoes"></textarea>
-                </div>
-            </div>
-            <button type="submit" class="btn-primary" style="margin-top: 2rem; width: 100%; max-width: 250px;">
-                Confirmar Agendamento
-            </button>
-        </form>
-    </section>
-
-    <section id="laudos" class="section-container">
-        <h2 class="section-title">Meus Laudos e Documentos</h2>
-        <div style="overflow-x:auto;">
-            <table class="tabela-consultas">
-                <thead>
-                    <tr>
-                        <th>Documento</th>
-                        <th>Data de Upload</th>
-                        <th>Ação</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>Raio-X Panorâmico.pdf</td>
-                        <td>15/08/2025</td>
-                        <td><a href="#" class="btn-primary" style="text-decoration: none;">Baixar</a></td>
-                    </tr>
-                    <tr>
-                        <td>Orçamento Tratamento.pdf</td>
-                        <td>10/08/2025</td>
-                        <td><a href="#" class="btn-primary" style="text-decoration: none;">Baixar</a></td>
-                    </tr>
-                </tbody>
-            </table>
+        <div style="margin-top: 15px;">
+            <a href="agendar_consulta.php" class="btn-primary">Agendar Nova Consulta</a>
         </div>
     </section>
 

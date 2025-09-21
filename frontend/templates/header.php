@@ -33,7 +33,7 @@
                     $nome_paciente = $_SESSION['usuario_nome'];
                 ?>
                     <li><a href="dashboard-paciente.php#consultas" class="nav-link">Minhas Consultas</a></li>
-                    <li><a href="dashboard-paciente.php#agendar" class="nav-link">Agendar</a></li>
+                    <li><a href="agendar_consulta.php" class="nav-link">Agendar</a></li>
                     <li><a href="dashboard-paciente.php#laudos" class="nav-link">Meus Laudos</a></li>
                     <li><a href="editar-perfil.php" class="nav-link">Olá, <?php echo htmlspecialchars(explode(' ', $nome_paciente)[0]); ?>!</a></li>
                     <li><a href="../backend/logout.php" class="nav-link btn-secondary" style="padding: 0.5rem 1rem; border-radius: 9999px;">Sair</a></li>
