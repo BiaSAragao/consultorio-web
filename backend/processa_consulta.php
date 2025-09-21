@@ -50,8 +50,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         }
     }
 
-    header("Location: listar_consultas.php?msg=Consulta agendada com sucesso!");
+    header("Location: dashboard-paciente.php?msg=Consulta agendada com sucesso!");
     exit;
+
 } else {
     die("Método inválido.");
 }
