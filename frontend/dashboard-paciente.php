@@ -21,9 +21,10 @@ include 'templates/header.php';
 // Buscar consultas do paciente logado
 $stmt = $pdo->prepare("
     SELECT c.consulta_id, c.data, c.hora, c.valor, c.observacoes,
-           d.nome AS dentista_nome
+           u.nome AS dentista_nome
     FROM consulta c
     JOIN dentista d ON c.usuario_dentista = d.usuario_id
+    JOIN usuario u ON d.usuario_id = u.usuario_id
     WHERE c.usuario_paciente = ?
     ORDER BY c.data, c.hora
 ");
