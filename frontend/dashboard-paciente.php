@@ -88,6 +88,9 @@ function buscarServicos($pdo, $consulta_id) {
                                     ?>
                                 </td>
                                 <td>
+                                     <a href="editar_consulta.php?id=<?php echo $c['consulta_id']; ?>" 
+                                        class="btn-tabela btn-secondary">Editar</a>
+                                        
                                     <a href="../backend/excluir_consulta.php?id=<?php echo $c['consulta_id']; ?>" 
                                        class="btn-tabela btn-cancelar" 
                                        onclick="return confirm('Tem certeza que deseja cancelar esta consulta?')">Cancelar</a>
