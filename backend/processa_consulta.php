@@ -59,7 +59,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         }
     }
 
-    header("Location: dashboard-paciente.php?msg=Consulta agendada com sucesso!");
+    header("Location: ../frontend/dashboard-paciente.php?msg=Consulta agendada com sucesso!");
     exit;
 
 } else {

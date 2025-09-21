@@ -20,7 +20,7 @@ $servicos = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
 <body>
     <h1>Agendar Consulta</h1>
 
-    <form action="../backend/processa_consulta.php" method="POST">
+    <form action="processa_consulta.php" method="POST">
         <!-- Data -->
         <label for="data">Data:</label>
         <input type="date" id="data" name="data" required><br><br>
