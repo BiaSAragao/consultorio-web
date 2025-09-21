@@ -10,10 +10,19 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $data = $_POST["data"];
     $hora = $_POST["hora"];
     $servicos = $_POST["servicos"] ?? [];
-    $observacoes = $_POST["observacoes"] ?? "";
+    $observacoes = $_POST["observacoes"] ?? '';
+    $historico   = $_POST["historico"] ?? '';
+    $alergias    = $_POST["alergias"] ?? '';
 
     $usuario_paciente = $_SESSION["usuario_id"];
-    $usuario_dentista = 1; // fixo (se só existe 1 dentista)
+    $usuario_dentista = 3; // substitua pelo ID real do dentista cadastrado
+
+    // Transformar em JSON
+    $observacoes_json = json_encode([
+        'obs'       => $observacoes,
+        'historico' => $historico,
+        'alergias'  => $alergias
+    ]);
 
     // calcular valor total
     $valor_total = 0;
