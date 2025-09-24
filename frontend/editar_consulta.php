@@ -18,18 +18,19 @@ if (!isset($_GET['id'])) {
 $consulta_id = intval($_GET['id']);
 $usuario_id = $_SESSION['usuario_id'];
 
-// Busca a consulta
+// Busca a consulta original
 $stmt = $pdo->prepare("SELECT * FROM consulta WHERE consulta_id = ? AND usuario_paciente = ?");
 $stmt->execute([$consulta_id, $usuario_id]);
 $consulta = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$consulta) {
-    header("Location: dashboard-paciente.php?msg=Consulta não encontrada ou acesso negado.");
+    header("Location: dashboard-paciente.php?msg_erro=Consulta não encontrada ou acesso negado.");
     exit();
 }
 
+$dentista_id = $consulta['usuario_dentista']; // Mantém o dentista original (fixo em 3)
+
 // 2. BUSCAR DADOS DE EDIÇÃO
-// Adicionando a Categoria para replicação exata do layout do agendar_consulta
 $servicos_disponiveis = $pdo->query("
     SELECT s.servico_id, s.nome_servico, s.preco, c.nome AS nome_categoria
     FROM Servico s
@@ -45,65 +46,93 @@ $servicos_atuais = array_column($stmt_servicos_atuais->fetchAll(PDO::FETCH_ASSOC
 // Decodifica observações (JSONB)
 $obs = json_decode($consulta['observacoes'], true);
 
+$mensagem_erro = ''; // Variável para armazenar mensagens de erro de validação
+
+
 // 3. PROCESSAMENTO POST (SALVAR ALTERAÇÕES)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // AQUI USAMOS O 'hora' do input type="time"
     $data = $_POST['data'];
     $hora = $_POST['hora']; 
     $servicos_selecionados = $_POST['servicos'] ?? [];
     
-    // CORREÇÃO: Usar as chaves corretas do JSON para extrair os dados
+    // CORREÇÃO: Usar as chaves corretas do JSON
     $observacoes = $_POST['observacoes'] ?? '';
     $historico = $_POST['historico'] ?? '';
     $alergias = $_POST['alergias'] ?? '';
 
-    // Lógica de cálculo (Valor Total)
-    $valor_total = 0;
-    if (!empty($servicos_selecionados)) {
-        $ids = implode(',', array_map('intval', $servicos_selecionados));
-        $stmt_valor = $pdo->query("SELECT SUM(preco) FROM servico WHERE servico_id IN ($ids)");
-        $valor_total = $stmt_valor->fetchColumn();
-    }
-
-    $observacoes_json_final = json_encode([
-        // Chaves iguais ao processa_consulta: 'observacoes', 'historico', 'alergias'
-        'observacoes' => $observacoes, 
-        'historico' => $historico,
-        'alergias' => $alergias
-    ]);
     
-    try {
-        $pdo->beginTransaction();
+    // ==========================================================
+    // ** LÓGICA DE VERIFICAÇÃO DE CONFLITO (CORREÇÃO AQUI) **
+    // ==========================================================
+    
+    // 1. Verificar se a nova data/hora já está ocupada
+    $stmt_conflito = $pdo->prepare("
+        SELECT consulta_id 
+        FROM consulta 
+        WHERE data = ? 
+        AND hora = ? 
+        AND usuario_dentista = ?
+        AND consulta_id != ?
+    ");
+    $stmt_conflito->execute([$data, $hora, $dentista_id, $consulta_id]);
+    $conflito = $stmt_conflito->fetch(PDO::FETCH_ASSOC);
 
-        // Atualizar consulta
-        $stmt_update = $pdo->prepare("UPDATE consulta SET data = ?, hora = ?, valor = ?, observacoes = ? WHERE consulta_id = ?");
-        $stmt_update->execute([$data, $hora, $valor_total, $observacoes_json_final, $consulta_id]);
+    if ($conflito) {
+        // Conflito encontrado, interrompe o processo e define a mensagem de erro
+        $mensagem_erro = "A data e horário ($data às $hora) que você selecionou já estão ocupados para este profissional. Por favor, escolha outro horário.";
+        // Não fazemos o EXIT ainda, para que a mensagem seja exibida no formulário.
 
-        // Atualiza os serviços (DELETE + INSERT)
-        $pdo->prepare("DELETE FROM consulta_servico WHERE consulta_id = ?")->execute([$consulta_id]);
-        $stmt_s = $pdo->prepare("INSERT INTO consulta_servico (consulta_id, servico_id) VALUES (?, ?)");
-        foreach ($servicos_selecionados as $s) {
-            $stmt_s->execute([$consulta_id, $s]);
+    } else {
+        // ==========================================================
+        // ** SE NÃO HOUVE CONFLITO, PROCESSA A ATUALIZAÇÃO **
+        // ==========================================================
+
+        // Lógica de cálculo (Valor Total)
+        $valor_total = 0;
+        if (!empty($servicos_selecionados)) {
+            $ids = implode(',', array_map('intval', $servicos_selecionados));
+            $stmt_valor = $pdo->query("SELECT SUM(preco) FROM servico WHERE servico_id IN ($ids)");
+            $valor_total = $stmt_valor->fetchColumn();
         }
+
+        $observacoes_json_final = json_encode([
+            'observacoes' => $observacoes, 
+            'historico' => $historico,
+            'alergias' => $alergias
+        ]);
         
-        $pdo->commit();
-        header("Location: dashboard-paciente.php?msg=Consulta #$consulta_id atualizada com sucesso!");
-        exit;
-        
-    } catch (PDOException $e) {
-        if ($pdo->inTransaction()) {
-            $pdo->rollBack();
+        try {
+            $pdo->beginTransaction();
+
+            // Atualizar consulta
+            $stmt_update = $pdo->prepare("UPDATE consulta SET data = ?, hora = ?, valor = ?, observacoes = ? WHERE consulta_id = ?");
+            $stmt_update->execute([$data, $hora, $valor_total, $observacoes_json_final, $consulta_id]);
+
+            // Atualiza os serviços (DELETE + INSERT)
+            $pdo->prepare("DELETE FROM consulta_servico WHERE consulta_id = ?")->execute([$consulta_id]);
+            $stmt_s = $pdo->prepare("INSERT INTO consulta_servico (consulta_id, servico_id) VALUES (?, ?)");
+            foreach ($servicos_selecionados as $s) {
+                $stmt_s->execute([$consulta_id, $s]);
+            }
+            
+            $pdo->commit();
+            header("Location: dashboard-paciente.php?msg=Consulta #$consulta_id atualizada com sucesso!");
+            exit;
+            
+        } catch (PDOException $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            header("Location: dashboard-paciente.php?msg_erro=Erro ao salvar as alterações. Tente novamente.");
+            exit;
         }
-        // Em um sistema real, você registraria $e->getMessage()
-        header("Location: dashboard-paciente.php?msg_erro=Erro ao salvar as alterações.");
-        exit;
     }
 }
 
 
 // 4. INCLUSÃO DO LAYOUT (HEADER E FOOTER)
 $titulo_pagina = "Editar Consulta ID: " . $consulta_id;
-$is_dashboard = true; // Carrega o CSS dashboard.css
+$is_dashboard = true; 
 include 'templates/header.php';
 ?>
 
@@ -112,6 +141,21 @@ include 'templates/header.php';
         <h2 class="section-title">Editar Consulta Agendada</h2>
         <p class="subtitle-secondary">Modifique os detalhes da sua consulta.</p>
         
+        <?php if (!empty($mensagem_erro)): ?>
+            <div style="background: #f8d7da; color: #721c24; padding: 10px; margin: 15px 0; border: 1px solid #f5c6cb; border-radius: 5px;">
+                <?php echo htmlspecialchars($mensagem_erro); ?>
+            </div>
+        <?php endif; ?>
+        
+        <?php 
+            $data_form = $_POST['data'] ?? $consulta['data'];
+            $hora_form = $_POST['hora'] ?? $consulta['hora'];
+            $servicos_form = $_POST['servicos'] ?? $servicos_atuais;
+            $obs_form = $_POST['observacoes'] ?? $obs['observacoes'] ?? $obs['obs'] ?? '';
+            $hist_form = $_POST['historico'] ?? $obs['historico'] ?? '';
+            $alerg_form = $_POST['alergias'] ?? $obs['alergias'] ?? '';
+        ?>
+
         <form method="POST" id="form-edicao">
             <input type="hidden" name="consulta_id" value="<?= $consulta_id ?>">
             
@@ -140,7 +184,7 @@ include 'templates/header.php';
                                        name="servicos[]" 
                                        value="<?= $servico['servico_id']; ?>" 
                                        data-preco="<?= $servico['preco']; ?>"
-                                       <?= in_array($servico['servico_id'], $servicos_atuais) ? 'checked' : '' ?>>
+                                       <?= in_array($servico['servico_id'], $servicos_form) ? 'checked' : '' ?>>
                                 <label for="servico_<?= $servico['servico_id']; ?>">
                                     <?= htmlspecialchars($servico['nome_servico']); ?> 
                                     (R$ <?= number_format($servico['preco'], 2, ',', '.'); ?>)
@@ -155,7 +199,7 @@ include 'templates/header.php';
                 <div class="form-group">
                     <label for="dentista_info">Profissional Escolhido:</label>
                     <p style="padding: 10px; border: 1px solid #ccc; background-color: #f8f9fa; border-radius: 4px;">
-                        **Dr(a). Fixo (ID <?= $consulta['usuario_dentista']; ?>)**
+                        **Dr(a). Fixo (ID <?= $dentista_id; ?>)**
                     </p>
                 </div>
 
@@ -171,14 +215,14 @@ include 'templates/header.php';
                     <div class="form-group">
                         <label for="data">Data da Consulta</label>
                         <input type="date" id="data" name="data" 
-                               value="<?= htmlspecialchars($consulta['data']) ?>" required>
+                               value="<?= htmlspecialchars($data_form) ?>" required>
                     </div>
 
                     <div class="form-group">
                         <label for="hora">Hora da Consulta</label>
                         <input type="time" id="hora" name="hora" 
-                               value="<?= htmlspecialchars($consulta['hora']) ?>" required>
-                        <p style="margin-top: 10px; color: #666; font-size: 0.9em;">**Se você alterar a data/hora, o sistema não verificará conflitos de agenda.**</p>
+                               value="<?= htmlspecialchars($hora_form) ?>" required>
+                        <p style="margin-top: 10px; color: #666; font-size: 0.9em;">**Se você alterar a data/hora, o sistema verificará conflitos de agenda ao salvar.**</p>
                     </div>
 
                 </div>
@@ -194,17 +238,17 @@ include 'templates/header.php';
                 
                 <div class="form-group">
                     <label for="observacoes">Observações sobre a Consulta:</label>
-                    <textarea id="observacoes" name="observacoes" placeholder="Ex: Preferência por anestesia local..." rows="3"><?= htmlspecialchars($obs['observacoes'] ?? $obs['obs'] ?? '') ?></textarea>
+                    <textarea id="observacoes" name="observacoes" placeholder="Ex: Preferência por anestesia local..." rows="3"><?= htmlspecialchars($obs_form) ?></textarea>
                 </div>
 
                 <div class="form-grid">
                     <div class="form-group">
                         <label for="historico">Histórico Médico Relevante:</label>
-                        <textarea id="historico" name="historico" placeholder="Condições médicas, cirurgias..." rows="3"><?= htmlspecialchars($obs['historico'] ?? '') ?></textarea>
+                        <textarea id="historico" name="historico" placeholder="Condições médicas, cirurgias..." rows="3"><?= htmlspecialchars($hist_form) ?></textarea>
                     </div>
                     <div class="form-group">
                         <label for="alergias">Alergias Conhecidas:</label>
-                        <textarea id="alergias" name="alergias" placeholder="Alergias a medicamentos, látex..." rows="3"><?= htmlspecialchars($obs['alergias'] ?? '') ?></textarea>
+                        <textarea id="alergias" name="alergias" placeholder="Alergias a medicamentos, látex..." rows="3"><?= htmlspecialchars($alerg_form) ?></textarea>
                     </div>
                 </div>
 
@@ -224,6 +268,14 @@ include 'templates/header.php';
     const inputServicosValidacao = document.getElementById('servicos_validacao');
     const inputData = document.getElementById('data');
     const inputHora = document.getElementById('hora');
+    const mensagemErro = document.querySelector('.main-container .section-container > div[style*="background: #f8d7da"]');
+    
+    // Identifica o passo inicial. Se houver erro de POST, volta para o Passo 2.
+    let passoInicial = 1;
+    if (mensagemErro) {
+         // Se houver mensagem de erro (conflito de horário), volta ao passo 2
+        passoInicial = 2;
+    }
 
     // Função para navegar entre os passos do formulário
     function irParaPasso(numeroPasso) {
@@ -262,9 +314,9 @@ include 'templates/header.php';
     }
 
 
-    // Inicializa o formulário no primeiro passo ao carregar a página
+    // Inicializa o formulário no primeiro passo ou no passo com erro
     document.addEventListener('DOMContentLoaded', () => {
-        irParaPasso(1);
+        irParaPasso(passoInicial);
     });
 </script>
 
