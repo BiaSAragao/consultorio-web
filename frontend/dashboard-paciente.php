@@ -1,4 +1,5 @@
 <?php
+<<<<<<< HEAD
 // --- TRUQUE TEMPORÁRIO PARA VISUALIZAÇÃO DO PACIENTE ---
 session_start();
 // Simulamos um usuário logado para a página não te redirecionar
@@ -7,15 +8,58 @@ $_SESSION['usuario_nome'] = "Paciente Teste"; // Um nome de teste para aparecer 
 $_SESSION['tipo_usuario'] = 'paciente'; // <-- MUDE AQUI para 'paciente'
 
 // --- FIM DO TRUQUE ---
+=======
+session_start();
+
+// Se o usuário não estiver logado, redireciona para o login
+if (!isset($_SESSION['usuario_id'])) {
+    header("Location: login.php");
+    exit();
+}
+
+require_once "../backend/conexao.php";
+
+$usuario_id = $_SESSION['usuario_id'];
+$usuario_nome = $_SESSION['usuario_nome'];
+>>>>>>> 9d63eb1c0800ea6b27fb590c7f0b725129694b8b
 
 $titulo_pagina = 'Meu Painel - SmileUp';
 $is_dashboard = true;
 
-// A linha abaixo já carrega todo o cabeçalho, menu e os links de CSS
+// Carrega cabeçalho e menu (tags <html>, <head>, <body>)
 include 'templates/header.php';
+
+// Buscar consultas do paciente logado
+$stmt = $pdo->prepare("
+    SELECT c.consulta_id, c.data, c.hora, c.valor, c.observacoes
+    FROM consulta c
+    WHERE c.usuario_paciente = ?
+    ORDER BY c.data, c.hora
+");
+$stmt->execute([$usuario_id]);
+$consultas = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Função para buscar serviços de cada consulta
+function buscarServicos($pdo, $consulta_id) {
+    $stmt = $pdo->prepare("
+        SELECT s.nome_servico
+        FROM consulta_servico cs
+        JOIN servico s ON cs.servico_id = s.servico_id
+        WHERE cs.consulta_id = ?
+    ");
+    $stmt->execute([$consulta_id]);
+    return $stmt->fetchAll(PDO::FETCH_COLUMN);
+}
 ?>
 
 <main class="main-container">
+
+    <!-- Mensagem de sucesso -->
+    <?php if (isset($_GET['msg'])): ?>
+        <div style="background: #d4edda; color: #155724; padding: 10px; margin: 15px 0; border: 1px solid #c3e6cb; border-radius: 5px;">
+            <?php echo htmlspecialchars($_GET['msg']); ?>
+        </div>
+    <?php endif; ?>
 
     <section id="consultas" class="section-container">
         <h2 class="section-title">Suas Próximas Consultas</h2>
@@ -24,39 +68,56 @@ include 'templates/header.php';
             <table class="tabela-consultas">
                 <thead>
                     <tr>
-                        <th>Especialidade</th>
-                        <th>Profissional</th>
                         <th>Data / Hora</th>
-                        <th>Status</th>
+                        <th>Valor</th>
+                        <th>Observações</th>
+                        <th>Serviços</th>
                         <th>Ações</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <td>Limpeza e Prevenção</td>
-                        <td>Dr. Ana Costa</td>
-                        <td>25/09/2025 às 14:00</td>
-                        <td><span class="status status-confirmada">Confirmada</span></td>
-                        <td>
-                            <button class="btn-tabela btn-secondary">Reagendar</button>
-                            <button class="btn-tabela btn-cancelar">Cancelar</button>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Ortodontia</td>
-                        <td>Dr. Carlos Moura</td>
-                        <td>15/10/2025 às 10:30</td>
-                        <td><span class="status status-pendente">Pendente</span></td>
-                        <td>
-                            <button class="btn-tabela btn-secondary">Reagendar</button>
-                            <button class="btn-tabela btn-cancelar">Cancelar</button>
-                        </td>
-                    </tr>
+                    <?php if (count($consultas) > 0): ?>
+                        <?php foreach ($consultas as $c): ?>
+                            <tr>
+                                <td>
+                                    <?php 
+                                        echo date("d/m/Y", strtotime($c['data'])) . 
+                                             " às " . date("H:i", strtotime($c['hora']));
+                                    ?>
+                                </td>
+                                <td>R$ <?php echo number_format($c['valor'], 2, ',', '.'); ?></td>
+                                <td>
+                                    <?php 
+                                        $obs = json_decode($c['observacoes'], true);
+                                        echo htmlspecialchars($obs['obs'] ?? '');
+                                    ?>
+                                </td>
+                                <td>
+                                    <?php 
+                                        $servicos = buscarServicos($pdo, $c['consulta_id']);
+                                        echo htmlspecialchars(implode(', ', $servicos));
+                                    ?>
+                                </td>
+                                <td>
+                                     <a href="editar_consulta.php?id=<?php echo $c['consulta_id']; ?>" 
+                                        class="btn-tabela btn-secondary">Editar</a>
+                                        
+                                    <a href="../backend/excluir_consulta.php?id=<?php echo $c['consulta_id']; ?>" 
+                                       class="btn-tabela btn-cancelar" 
+                                       onclick="return confirm('Tem certeza que deseja cancelar esta consulta?')">Cancelar</a>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <tr>
+                            <td colspan="5">Nenhuma consulta agendada.</td>
+                        </tr>
+                    <?php endif; ?>
                 </tbody>
             </table>
         </div>
-    </section>
 
+<<<<<<< HEAD
     <section id="agendar" class="section-container">
         <h2 class="section-title">Agendar Nova Consulta</h2>
         
@@ -139,11 +200,16 @@ include 'templates/header.php';
                     </tr>
                 </tbody>
             </table>
+=======
+        <div style="margin-top: 15px;">
+            <a href="agendar_consulta.php" class="btn-primary">Agendar Nova Consulta</a>
+>>>>>>> 9d63eb1c0800ea6b27fb590c7f0b725129694b8b
         </div>
     </section>
 
 </main>
 
+<<<<<<< HEAD
 <style>
     .botoes-navegacao {
         display: flex;
@@ -248,7 +314,9 @@ include 'templates/header.php';
 </script>
 
 
+=======
+>>>>>>> 9d63eb1c0800ea6b27fb590c7f0b725129694b8b
 <?php
-// A linha abaixo já carrega todo o rodapé e fecha as tags </body> e </html>
+// Fecha as tags <body> e <html>
 include 'templates/footer.php';
 ?>

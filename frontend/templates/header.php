@@ -34,6 +34,7 @@
                     // --- MENU DO DENTISTA ---
                     if ($tipo_usuario === 'dentista'):
                 ?>
+<<<<<<< HEAD
                         <li><a href="dashboard-dentista.php#agenda-do-dia" class="nav-link">Minha Agenda</a></li>
                         <li><a href="dashboard-dentista.php#meus-horarios" class="nav-link">Gerenciar Horários</a></li>
                        <li><a href="meus-pacientes.php" class="nav-link">Meus Pacientes</a></li>
@@ -56,6 +57,15 @@
                 else:
                 ?>
                     <li><a href="home.html#home" class="nav-link">Home</a></li>
+=======
+                    <li><a href="dashboard-paciente.php#consultas" class="nav-link">Minhas Consultas</a></li>
+                    <li><a href="agendar_consulta.php" class="nav-link">Agendar</a></li>
+                    <li><a href="dashboard-paciente.php#laudos" class="nav-link">Meus Laudos</a></li>
+                    <li><a href="editar-perfil.php" class="nav-link">Olá, <?php echo htmlspecialchars(explode(' ', $nome_paciente)[0]); ?>!</a></li>
+                    <li><a href="../backend/logout.php" class="nav-link btn-secondary" style="padding: 0.5rem 1rem; border-radius: 9999px;">Sair</a></li>
+                <?php else: ?>
+                    <li><a href="home.htmp#home" class="nav-link">Home</a></li>
+>>>>>>> 9d63eb1c0800ea6b27fb590c7f0b725129694b8b
                     <li><a href="home.html#servicos" class="nav-link">Serviços</a></li>
                     <li><a href="home.html#contatos" class="nav-link">Contatos</a></li>
                     <li><a href="../admin/login-dentista.php" class="nav-link">Sou Dentista</a></li>

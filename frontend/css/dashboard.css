@@ -138,6 +138,12 @@
     margin-left: 0.5rem;
 }
 
+.btn-secondary {
+    background-color: #4717f2; /* red-500 */
+    color: #fff;
+    margin-left: 0.5rem;
+}
+
 .mensagem-vazia {
     text-align: center;
     padding: 2rem;
