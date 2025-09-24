@@ -9,10 +9,10 @@
     
     <title><?php echo isset($titulo_pagina) ? $titulo_pagina : 'SmileUp Odontologia'; ?></title>
     
-    <link rel="stylesheet" href="/consultorio-web/frontend/css/home.css">
+    <link rel="stylesheet" href="css/home.css">
     
     <?php if (isset($is_dashboard) && $is_dashboard): ?>
-        <link rel="stylesheet" href="/consultorio-web/frontend/css/dashboard.css">
+        <link rel="stylesheet" href="css/dashboard.css">
     <?php endif; ?>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -45,7 +45,7 @@
                     else:
                 ?>
                         <li><a href="dashboard-paciente.php#consultas" class="nav-link">Minhas Consultas</a></li>
-                        <li><a href="dashboard-paciente.php#agendar" class="nav-link">Agendar</a></li>
+                        <li><a href="agendar_consulta.php" class="nav-link">Agendar</a></li>
                         <li><a href="dashboard-paciente.php#laudos" class="nav-link">Meus Laudos</a></li>
                         <li><a href=" " class="nav-link">Olá, <?php echo htmlspecialchars(explode(' ', $nome_usuario)[0]); ?>!</a></li>
                         <li><a href="../backend/logout.php" class="nav-link btn-secondary" style="padding: 0.5rem 1rem; border-radius: 9999px;">Sair</a></li>
