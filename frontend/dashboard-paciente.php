@@ -5,16 +5,36 @@ session_start();
 // Carrega o arquivo de conexão com o banco de dados
 require_once "../backend/conexao.php";
 
-// 1. VERIFICAÇÃO DE AUTENTICAÇÃO
-// Verifica se o usuário está logado e se ele é um paciente.
-// Se não, redireciona para a página de login.
-if (!isset($_SESSION['usuario_id']) || $_SESSION['tipo_usuario'] !== 'paciente') {
+// 1. VERIFICAÇÃO DE AUTENTICAÇÃO E TIPO DE USUÁRIO
+// A verificação agora é feita diretamente no banco de dados.
+
+// Verifica se o usuário está logado
+if (!isset($_SESSION['usuario_id'])) {
     header("Location: login.php");
     exit();
 }
 
-// Pega o ID e o nome do paciente da sessão
+// Pega o ID do usuário logado
 $usuario_id = $_SESSION['usuario_id'];
+
+try {
+    // Confirma se o usuario_id existe na tabela de pacientes
+    $stmt_verifica = $pdo->prepare("SELECT usuario_id FROM Paciente WHERE usuario_id = ?");
+    $stmt_verifica->execute([$usuario_id]);
+    
+    // Se não encontrar o ID, o usuário não é um paciente.
+    if (!$stmt_verifica->fetch()) {
+        header("Location: login.php");
+        exit();
+    }
+
+} catch (PDOException $e) {
+    // Em caso de erro, redireciona para a página de login
+    header("Location: login.php");
+    exit();
+}
+
+// Agora que o usuário é validado como paciente, pegamos as outras informações
 $usuario_nome = $_SESSION['usuario_nome'];
 
 $titulo_pagina = 'Meu Painel - SmileUp';
@@ -45,7 +65,6 @@ $stmt->execute([$usuario_id]);
 $consultas = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // 3. FUNÇÃO PARA BUSCAR SERVIÇOS DE CADA CONSULTA
-// A variável $pdo precisa ser passada para a função pois ela não está no escopo global
 function buscarServicos($pdo, $consulta_id) {
     $stmt = $pdo->prepare("
         SELECT 
