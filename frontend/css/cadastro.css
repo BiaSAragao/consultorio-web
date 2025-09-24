@@ -1,0 +1,114 @@
+/* --- Estilos para a página de Cadastro --- */
+/* OS ESTILOS SÃO OS MESMOS DA PÁGINA DE LOGIN PARA MANTER A CONSISTÊNCIA */
+
+/* --- Geral --- */
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #d9d9d9;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    padding: 20px;
+}
+
+/* --- Container do Formulário --- */
+form {
+    background-color: #fff;
+    padding: 2.5rem;
+    border-radius: 0.75rem;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    max-width: 800px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* --- Título --- */
+h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #c69963;
+    text-align: center;
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+}
+
+/* --- Rótulos (Labels) --- */
+label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.5rem;
+}
+
+/* --- Campos de Entrada (Inputs) --- */
+input[type="email"],
+input[type="password"],
+input[type="text"],
+input[type="tel"], /* <-- Adicione esta linha */
+input[type="date"] /* <-- Adicione esta também */ {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 1rem;
+    box-sizing: border-box;
+    margin-bottom: 1rem;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+input:focus {
+    outline: none;
+    border-color: #cab078;
+    box-shadow: 0 0 0 3px rgba(202, 176, 120, 0.3);
+}
+
+/* --- Botão de Envio --- */
+button[type="submit"] {
+    width: 100%;
+    padding: 0.875rem;
+    border: none;
+    border-radius: 9999px;
+    background-color: #cab078;
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin-top: 1rem;
+}
+
+button[type="submit"]:hover {
+    background-color: #a68c5b;
+}
+
+/* --- Link para Login --- */
+.cadastro-link, .login-link {
+    text-align: center;
+    margin-top: 1.5rem;
+    font-size: 0.875rem;
+    color: #4b5563;
+}
+
+.cadastro-link a, .login-link a {
+    color: #c69963;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.cadastro-link a:hover, .login-link a:hover {
+    text-decoration: underline;
+}
+
+/* --- Mensagem de Erro --- */
+.erro {
+    color: #D8000C;
+    background-color: #FFBABA;
+    border: 1px solid #D8000C;
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 5px;
+    text-align: center;
+}

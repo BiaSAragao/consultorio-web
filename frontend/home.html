@@ -4,7 +4,7 @@
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<title>Clínica Odontológica</title>
-		<link rel="stylesheet" href="home.css" />
+		<link rel="stylesheet" href="css/home.css" />
 		<link
 			rel="preconnect"
 			href="https://fonts.googleapis.com"
@@ -66,30 +66,23 @@
 				id="home"
 			>
 				<div class="clearfix">
-					<img
-						src="imagemclinica.jpg"
-						alt="Clínica Odontológica"
-						class="home-image"
-						onerror="this.onerror=null;this.src='https://placehold.co/600x400/cab078/333333?text=Imagem+indisponível'"
-					/>
+					<div class="slideshow-container">
+						<img src="imagens/foto1.jpg" alt="Foto da clínica 1" class="slide" />
+						<img src="imagens/foto2.jpg" alt="Foto da clínica 2" class="slide" />
+						<img src="imagens/foto3.jpg" alt="Foto da clínica 3" class="slide" />
+						<img src="imagens/foto4.jpg" alt="Foto da clínica 4" class="slide" />
+					</div>
 
 					<h1 class="main-title">
 						Bem vindo à Smile Up! Seu sorriso é nossa prioridade
 					</h1>
 					<p class="main-text">
-						Oferecemos tratamentos odontológicos de excelência
-						com tecnologia moderna e atendimento humanizado.
-						Cuidamos da saúde do seu sorriso com carinho e
-						profissionalismo.
+					Na SmileUp, entendemos a odontologia como uma parte essencial da sua saúde e bem-estar. Nosso compromisso é oferecer tratamentos de excelência, realizados com um atendimento profundamente humanizado e atencioso. Aqui, a saúde do seu sorriso é cuidada com o carinho, a dedicação e o profissionalismo que você merece.
 					</p>
 
 					<h2 class="section-title">Nossa Filosofia</h2>
 					<p class="section-text">
-						Acreditamos que cada sorriso é único e merece
-						cuidado especializado. Nossa missão é proporcionar
-						tratamentos odontológicos de excelência, combinando
-						tecnologia avançada com atendimento humanizado e
-						personalizado.
+						Acreditamos que cada sorriso é único e, por isso, merece um cuidado que vai além da boca. Como uma clínica de odontologia integrativa, nossa filosofia é enxergar cada paciente de forma completa. Nossa missão é proporcionar tratamentos de excelência, realizados por profissionais altamente capacitados e em constante atualização, sempre com um atendimento humanizado e personalizado.
 					</p>
 					<ul class="styled-list">
 						<li class="list-item">
@@ -114,8 +107,8 @@
 			<section class="services-section" id="servicos">
 				<h2 class="services-title">Nossos Serviços</h2>
 				<p class="services-text">
-					Aqui você pode listar todos os tratamentos que a clínica
-					oferece, de limpeza e prevenção a tratamentos estéticos.
+					Aqui estão todos os tratamentos que a clínica
+					oferece!
 				</p>
 
 				<div class="services-grid">
@@ -154,36 +147,32 @@
 
 					<!-- Card de Serviço 2 -->
 					<div class="service-card">
-						<div class="icon-container">
-							<svg class="service-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-								<path
-									stroke-linecap="round"
-									stroke-linejoin="round"
-									stroke-width="2"
-									d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M18 14h.01"
-								/>
-							</svg>
-						</div>
-						<h3 class="card-title">Estética Dental</h3>
-						<p class="card-text">
-							Clareamento, facetas e tratamentos para um sorriso
-							mais bonito e confiante.
-						</p>
-						<ul class="card-list">
-							<li class="card-list-item">
-								<span class="bullet-point">&#8226;</span>
-								Clareamento
-							</li>
-							<li class="card-list-item">
-								<span class="bullet-point">&#8226;</span>
-								Facetas de porcelana
-							</li>
-							<li class="card-list-item">
-								<span class="bullet-point">&#8226;</span>
-								Restaurações estéticas
-							</li>
-						</ul>
-					</div>
+                    <div class="icon-container">
+                        <svg class="service-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M5.706 5.89C6.429 5.022 7.507 4.5 9 4.5c.907 0 1.749.267 2.454.727a4.5 4.5 0 0 1 1.74 2.137a1 1 0 1 0 1.862-.728a6.5 6.5 0 0 0-1.224-1.983q.56-.151 1.168-.153c1.493 0 2.57.522 3.294 1.39c.744.893 1.206 2.264 1.206 4.11c0 2.903-.486 5.385-1.23 7.102c-.785 1.812-1.667 2.398-2.27 2.398c-.15 0-.275-.035-.461-.358c-.226-.392-.385-.96-.592-1.72c-.174-.639-.39-1.433-.752-2.062C13.787 14.652 13.1 14 12 14s-1.787.652-2.195 1.36c-.362.63-.578 1.423-.752 2.062c-.207.76-.366 1.328-.592 1.72c-.186.323-.311.358-.461.358c-.603 0-1.485-.586-2.27-2.398c-.744-1.717-1.23-4.2-1.23-7.102c0-1.846.462-3.217 1.206-4.11M12 3.232A6.5 6.5 0 0 0 9 2.5c-2.007 0-3.68.728-4.83 2.11C3.037 5.967 2.5 7.846 2.5 10c0 3.097.514 5.865 1.395 7.898C4.735 19.836 6.103 21.5 8 21.5c1.1 0 1.787-.652 2.195-1.36c.374-.65.593-1.477.77-2.127c.198-.726.354-1.274.574-1.655c.186-.323.311-.358.461-.358s.275.035.461.358c.22.381.376.93.574 1.655c.177.65.396 1.476.77 2.127c.408.708 1.095 1.36 2.195 1.36c1.897 0 3.265-1.664 4.105-3.602c.88-2.033 1.395-4.8 1.395-7.898c0-2.154-.538-4.033-1.67-5.39C18.68 3.228 17.008 2.5 15 2.5c-1.08 0-2.102.264-3 .732"/>
+                        </svg>
+                    </div>
+                    <h3 class="card-title">Estética Dental</h3>
+                    <p class="card-text">
+                        Clareamento, facetas e tratamentos para um sorriso
+                        mais bonito e confiante.
+                    </p>
+                    <ul class="card-list">
+                        <li class="card-list-item">
+                            <span class="bullet-point">&#8226;</span>
+                            Clareamento
+                        </li>
+                        <li class="card-list-item">
+                            <span class="bullet-point">&#8226;</span>
+                            Facetas de porcelana
+                        </li>
+                        <li class="card-list-item">
+                            <span class="bullet-point">&#8226;</span>
+                            Restaurações estéticas
+                        </li>
+                    </ul>
+                </div>
+
 
 					<!-- Card de Serviço 3 -->
 					<div class="service-card">
@@ -247,60 +236,56 @@
 
 					<!-- Card de Serviço 5 -->
 					<div class="service-card">
-						<div class="icon-container">
-							<svg class="service-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-								<path
-									stroke-linecap="round"
-									stroke-linejoin="round"
-									stroke-width="2"
-									d="M12 20s8-4 8-10A8 8 0 0012 2a8 8 0 00-8 8c0 6 8 10 8 10z"
-								/>
-								<circle cx="12" cy="10" r="3" />
-							</svg>
-						</div>
-						<h3 class="card-title">Implantes Dentários</h3>
-						<p class="card-text">
-							Soluções permanentes para repor dentes perdidos, restaurando a função e a estética do sorriso.
-						</p>
-						<ul class="card-list">
-							<li class="card-list-item">
-								<span class="bullet-point">&#8226;</span>
-								Implantes unitários
-							</li>
-							<li class="card-list-item">
-								<span class="bullet-point">&#8226;</span>
-								Protocolo de carga imediata
-							</li>
-						</ul>
-					</div>
+                    <div class="icon-container">
+                        <svg class="service-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                            <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5">
+                                <path d="M17.25 8.58a3.134 3.134 0 0 0-3.029-3.231A2.93 2.93 0 0 0 12 6.4a2.93 2.93 0 0 0-2.221-1.051A3.134 3.134 0 0 0 6.75 8.58a6.7 6.7 0 0 0 1.225 3.452a.83.83 0 0 1 .09.8a6.9 6.9 0 0 0-.507 2.617v1.01a1.01 1.01 0 0 0 2.019 0a2.514 2.514 0 0 1 2.293-2.622a2.432 2.432 0 0 1 2.553 2.622a1.01 1.01 0 0 0 2.019 0v-1.01a6.85 6.85 0 0 0-.572-2.771a.82.82 0 0 1 .064-.835A6.13 6.13 0 0 0 17.25 8.58"/>
+                                <path d="M2.25 3.923v7.614A11.91 11.91 0 0 0 9.882 22.65l1.041.4a3 3 0 0 0 2.154 0l1.041-.4a11.91 11.91 0 0 0 7.632-11.113V3.923a1.49 1.49 0 0 0-.868-1.362A21.7 21.7 0 0 0 12 .75a21.7 21.7 0 0 0-8.882 1.811a1.49 1.49 0 0 0-.868 1.362"/>
+                            </g>
+                        </svg>
+                    </div>
+                    <h3 class="card-title">Implantes Dentários</h3>
+                    <p class="card-text">
+                        Soluções permanentes para repor dentes perdidos, restaurando a função e a estética do sorriso.
+                    </p>
+                    <ul class="card-list">
+                        <li class="card-list-item">
+                            <span class="bullet-point">&#8226;</span>
+                            Implantes unitários
+                        </li>
+                        <li class="card-list-item">
+                            <span class="bullet-point">&#8226;</span>
+                            Protocolo de carga imediata
+                        </li>
+                    </ul>
+                </div>
 					
 					<!-- Card de Serviço 6 -->
 					<div class="service-card">
-						<div class="icon-container">
-							<svg class="service-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-								<path
-									stroke-linecap="round"
-									stroke-linejoin="round"
-									stroke-width="2"
-									d="M12 21a9 9 0 01-9-9c0-4.04 2.87-7.44 6.67-8.3M21 12a9 9 0 01-9 9m0-18a9 9 0 019 9m-9 9V3"
-								/>
-							</svg>
-						</div>
-						<h3 class="card-title">Ortodontia</h3>
-						<p class="card-text">
-							Alinhamento dos dentes e correção da mordida para um sorriso mais harmonioso.
-						</p>
-						<ul class="card-list">
-							<li class="card-list-item">
-								<span class="bullet-point">&#8226;</span>
-								Aparelhos fixos
-							</li>
-							<li class="card-list-item">
-								<span class="bullet-point">&#8226;</span>
-								Alinhadores transparentes
-							</li>
-						</ul>
-					</div>
+                    <div class="icon-container">
+                        <svg class="service-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                            <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5">
+                                <path d="M.75 6.75v-3.5A1.5 1.5 0 0 1 1.8 1.819C3.188 1.376 6.185.75 12 .75s8.812.626 10.2 1.069a1.5 1.5 0 0 1 1.045 1.43v3.5"/>
+                                <path d="M5.25 6.75a2.25 2.25 0 1 0-4.5 0v1.5a1.5 1.5 0 0 0 1.5 1.5h1.5a1.5 1.5 0 0 0 1.5-1.5zm4.5 0a2.25 2.25 0 1 0-4.5 0v1.5a1.5 1.5 0 0 0 1.5 1.5h1.5a1.5 1.5 0 0 0 1.5-1.5zm4.5 0a2.25 2.25 0 0 0-4.5 0v1.5a1.5 1.5 0 0 0 1.5 1.5h1.5a1.5 1.5 0 0 0 1.5-1.5zm4.5 0a2.25 2.25 0 0 0-4.5 0v1.5a1.5 1.5 0 0 0 1.5 1.5h1.5a1.5 1.5 0 0 0 1.5-1.5zm4.5 0a2.25 2.25 0 0 0-4.5 0v1.5a1.5 1.5 0 0 0 1.5 1.5h1.5a1.5 1.5 0 0 0 1.5-1.5zM.75 17.25v3.5a1.5 1.5 0 0 0 1.05 1.431c1.388.443 4.385 1.069 10.2 1.069s8.812-.626 10.2-1.069a1.5 1.5 0 0 0 1.045-1.43v-3.5"/>
+                                <path d="M5.25 17.25a2.25 2.25 0 0 1-4.5 0v-1.5a1.5 1.5 0 0 1 1.5-1.5h1.5a1.5 1.5 0 0 1 1.5 1.5zm4.5 0a2.25 2.25 0 0 1-4.5 0v-1.5a1.5 1.5 0 0 1 1.5-1.5h1.5a1.5 1.5 0 0 1 1.5 1.5zm4.5 0a2.25 2.25 0 0 1-4.5 0v-1.5a1.5 1.5 0 0 1 1.5-1.5h1.5a1.5 1.5 0 0 1 1.5 1.5zm4.5 0a2.25 2.25 0 0 1-4.5 0v-1.5a1.5 1.5 0 0 1 1.5-1.5h1.5a1.5 1.5 0 0 1 1.5 1.5zm4.5 0a2.25 2.25 0 0 1-4.5 0v-1.5a1.5 1.5 0 0 1 1.5-1.5h1.5a1.5 1.5 0 0 1 1.5 1.5z"/>
+                            </g>
+                        </svg>
+                    </div>
+                    <h3 class="card-title">Ortodontia</h3>
+                    <p class="card-text">
+                        Alinhamento dos dentes e correção da mordida para um sorriso mais harmonioso.
+                    </p>
+                    <ul class="card-list">
+                        <li class="card-list-item">
+                            <span class="bullet-point">&#8226;</span>
+                            Aparelhos fixos
+                        </li>
+                        <li class="card-list-item">
+                            <span class="bullet-point">&#8226;</span>
+                            Alinhadores transparentes
+                        </li>
+                    </ul>
+                </div>
 
 				</div>
 			</section>
@@ -326,13 +311,24 @@
 					>
 				</div>
 			</section>
+<section class="section-container text-center" id="contatos">
+            <h2 class="section-title-alt section-header-center">Entre em Contato</h2>
 
-			<section class="section-container text-center" id="contatos">
-				<h2 class="section-title-alt section-header-center">Entre em Contato</h2>
-				<p class="section-text-alt">
-					Estamos prontos para te atender. Entre em contato por telefone, email ou visite-nos em nosso endereço.
-				</p>
-			</section>
+            <div class="contact-text-block">
+                <strong>Telefone Fixo:</strong> 
+                <a href="tel:+557532216277">(75) 3221-6277</a>
+                <br>
+                <strong>Celular:</strong> 
+                <a href="https://wa.me/5575981190404" target="_blank">(75) 98119-0404</a>
+                <br><br>
+                <strong>Endereço:</strong><br>
+                <a href="https://www.google.com/maps/search/?api=1&query=Edifício+Metropolitan+Center+-+R.+Barão+do+Rio+Branco,+1309+-+Sala+101+-+Centro,+Feira+de+Santana+-+BA,+44001-205" target="_blank">
+                    Ed. Metropolitan Center, Sala 101<br>
+                    R. Barão do Rio Branco, 1309 - Centro<br>
+                    Feira de Santana - BA
+                </a>
+            </div>
+        </section>
 		</main>
 
 		<footer class="footer">

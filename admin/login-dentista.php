@@ -47,10 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Login - Dentista</title>
-        <link rel="stylesheet" href="../frontend/home.css" />
-        <style>
-             .erro { color: #D8000C; background-color: #FFBABA; border: 1px solid; margin: 10px 0px; padding: 15px; border-radius: 5px; text-align: center; }
-        </style>
+        <link rel="stylesheet" href="logind.css" />
     </head>
     <body>
         <main class="main-container">
@@ -77,7 +74,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         <input type="email" id="email" name="email" required>
                     </div>
                     <div class="form-group">
-                        <label for="password">Senha:</label>
+                        <label for="password">Senha do consultório:</label>
                         <input type="password" id="password" name="senha" required>
                     </div>
                     <button type="submit" class="btn-primary">Entrar</button>

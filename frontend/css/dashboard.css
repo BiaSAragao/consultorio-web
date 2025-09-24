@@ -146,3 +146,62 @@
     color: #6b7280; /* gray-500 */
     margin-top: 1.5rem;
 }
+/* =============================================== */
+/* == Estilos para o Cabeçalho da Ficha do Paciente == */
+/* =============================================== */
+
+/* O card principal que envolve as informações */
+.patient-header-card {
+    background-color: #fff; /* Fundo branco para destacar */
+    border: 1px solid #e5e7eb; /* Borda sutil */
+    border-radius: 0.75rem; /* Bordas arredondadas */
+    padding: 2rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05); /* Sombra leve */
+}
+
+/* Título "Ficha Completa de:" */
+.patient-header-card .card-subtitle {
+    font-size: 1rem;
+    font-weight: 500;
+    color: #6b7280; /* Cinza para dar menos destaque */
+    margin: 0;
+}
+
+/* Nome do Paciente em destaque */
+.patient-header-card .card-title {
+    font-size: 2.25rem; /* Tamanho grande */
+    font-weight: 700;
+    color: #1f2937; /* Cor escura, quase preto */
+    margin: 0.25rem 0 1.5rem 0; /* Espaçamento abaixo do nome */
+    border-bottom: 1px solid #f3f4f6; /* Linha sutil para separar */
+    padding-bottom: 1.5rem;
+}
+
+/* A grade que organiza os detalhes (CPF, Telefone, etc.) */
+.patient-details-grid {
+    display: grid;
+    /* Cria colunas responsivas: elas tentam ter 250px, mas se ajustam */
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem; /* Espaço entre os itens */
+}
+
+/* Cada item individual (ex: o bloco "Telefone") */
+.patient-details-grid .detail-item {
+    display: flex;
+    flex-direction: column;
+}
+
+/* O rótulo (ex: "Telefone:") */
+.patient-details-grid .detail-label {
+    font-size: 0.875rem;
+    color: #6b7280; /* Cinza */
+    margin-bottom: 0.25rem;
+    text-transform: uppercase; /* Opcional: deixa em maiúsculas */
+}
+
+/* O valor (ex: "(75) 99999-8888") */
+.patient-details-grid .detail-value {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #374151;
+}

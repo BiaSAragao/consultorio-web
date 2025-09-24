@@ -376,3 +376,75 @@ body {
         padding: 1.5rem;
     }
 }
+/* --- CSS do Slideshow --- */
+
+/* 1. Estiliza o container principal do slideshow */
+.slideshow-container {
+    position: relative; /* Necessário para posicionar as imagens dentro dele */
+    width: 100%;
+    height: 400px; /* Defina uma altura ou use aspect-ratio */
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    margin-bottom: 2rem;
+    overflow: hidden; /* Garante que as imagens não "vazem" para fora */
+}
+
+/* 2. Estiliza cada imagem (slide) */
+.slideshow-container .slide {
+    position: absolute; /* Coloca todas as imagens umas sobre as outras */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Garante que a imagem cubra o espaço sem distorcer */
+    opacity: 0; /* Começam invisíveis */
+    animation: fadeShow 16s infinite; /* Aplica a animação com duração total de 16s */
+}
+
+/* 3. Define a animação (keyframes) */
+@keyframes fadeShow {
+    0% { opacity: 0; }
+    10% { opacity: 1; } /* Fade in (1.6s) */
+    25% { opacity: 1; } /* Fica visível (2.4s) */
+    35% { opacity: 0; } /* Fade out (1.6s) */
+    100% { opacity: 0; }
+}
+
+/* 4. Define um atraso para cada imagem começar a aparecer na hora certa */
+.slideshow-container .slide:nth-child(2) {
+    animation-delay: 4s; /* Começa após 4 segundos */
+}
+.slideshow-container .slide:nth-child(3) {
+    animation-delay: 8s; /* Começa após 8 segundos */
+}
+.slideshow-container .slide:nth-child(4) {
+    animation-delay: 12s; /* Começa após 12 segundos */
+}
+
+/* 5. Ajusta o slideshow para telas maiores, como a imagem original */
+@media (min-width: 768px) {
+    .slideshow-container {
+        width: 50%;
+        margin-bottom: 0;
+        float: right;
+        margin-left: 2rem;
+    }
+}
+/* --- Estilos da Seção de Contatos (Apenas Texto) --- */
+
+.contact-text-block {
+      margin-top: 2rem; 
+    font-size: 1.125rem; 
+    line-height: 1.8; 
+    color: #374151; 
+    text-align: center; /* Adicione esta linha para centralizar */
+}
+
+.contact-text-block a {
+    color: inherit; /* Faz o link ter a mesma cor do texto */
+    text-decoration: none; /* Remove o sublinhado */
+}
+
+.contact-text-block a:hover {
+    text-decoration: underline; /* Adiciona sublinhado ao passar o mouse */
+}

@@ -1,0 +1,109 @@
+/* --- Estilos para a página de Login do Dentista --- */
+
+/* --- Geral --- */
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #d9d9d9; /* Mesmo fundo da homepage */
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+/* --- Container Principal --- */
+.main-container {
+    width: 100%;
+    max-width: 1280px;
+    margin: auto;
+}
+
+.section-container {
+    background-color: #fff;
+    padding: 10rem 10rem;
+    border-radius: 0.75rem;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    max-width: 800px; /* Largura do card */
+    margin: auto;
+    box-sizing: border-box;
+}
+
+/* --- Textos (Títulos e Parágrafos) --- */
+.section-title-alt {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #c69963;
+    margin-bottom: 1rem;
+}
+
+.section-header-center {
+    text-align: center;
+}
+
+.section-text-alt {
+    font-size: 1rem;
+    color: #4b5563;
+    text-align: center;
+    max-width: 28rem;
+    margin: 0 auto 1.5rem auto;
+}
+
+/* --- Formulário --- */
+.form-group {
+    margin-bottom: 1.5rem; /* Espaço entre os campos */
+}
+
+.form-group label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.5rem;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 1rem;
+    box-sizing: border-box;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #cab078;
+    box-shadow: 0 0 0 3px rgba(202, 176, 120, 0.3);
+}
+
+/* --- Botão --- */
+.btn-primary {
+    width: 100%;
+    padding: 0.875rem;
+    border: none;
+    border-radius: 9999px;
+    background-color: #cab078;
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin-top: 1rem;
+}
+
+.btn-primary:hover {
+    background-color: #a68c5b;
+}
+
+/* --- Mensagem de Erro --- */
+.erro {
+    color: #D8000C;
+    background-color: #FFBABA;
+    border: 1px solid #D8000C;
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 5px;
+    text-align: center;
+}

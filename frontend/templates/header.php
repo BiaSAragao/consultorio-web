@@ -1,6 +1,4 @@
 <?php
-// Inicia a sessão em todas as páginas que incluírem este header.
-// A @ suprime o aviso caso a sessão já tenha sido iniciada na página principal.
 @session_start();
 ?>
 <!DOCTYPE html>
@@ -11,10 +9,10 @@
     
     <title><?php echo isset($titulo_pagina) ? $titulo_pagina : 'SmileUp Odontologia'; ?></title>
     
-    <link rel="stylesheet" href="css/home.css">
+    <link rel="stylesheet" href="/consultorio-web/frontend/css/home.css">
     
     <?php if (isset($is_dashboard) && $is_dashboard): ?>
-        <link rel="stylesheet" href="css/dashboard.css">
+        <link rel="stylesheet" href="/consultorio-web/frontend/css/dashboard.css">
     <?php endif; ?>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -28,17 +26,36 @@
         <nav class="nav">
             <ul class="nav-list">
                 <?php
-                // Verifica se o usuário está LOGADO
+                // Verifica se há um usuário logado
                 if (isset($_SESSION['usuario_id'])):
-                    $nome_paciente = $_SESSION['usuario_nome'];
+                    $nome_usuario = $_SESSION['usuario_nome'];
+                    $tipo_usuario = $_SESSION['tipo_usuario'] ?? 'paciente'; // Padrão é paciente
+
+                    // --- MENU DO DENTISTA ---
+                    if ($tipo_usuario === 'dentista'):
                 ?>
-                    <li><a href="dashboard-paciente.php#consultas" class="nav-link">Minhas Consultas</a></li>
-                    <li><a href="dashboard-paciente.php#agendar" class="nav-link">Agendar</a></li>
-                    <li><a href="dashboard-paciente.php#laudos" class="nav-link">Meus Laudos</a></li>
-                    <li><a href="editar-perfil.php" class="nav-link">Olá, <?php echo htmlspecialchars(explode(' ', $nome_paciente)[0]); ?>!</a></li>
-                    <li><a href="../backend/logout.php" class="nav-link btn-secondary" style="padding: 0.5rem 1rem; border-radius: 9999px;">Sair</a></li>
-                <?php else: ?>
-                    <li><a href="home.htmp#home" class="nav-link">Home</a></li>
+                        <li><a href="dashboard-dentista.php#agenda-do-dia" class="nav-link">Minha Agenda</a></li>
+                        <li><a href="dashboard-dentista.php#meus-horarios" class="nav-link">Gerenciar Horários</a></li>
+                       <li><a href="meus-pacientes.php" class="nav-link">Meus Pacientes</a></li>
+                        <li><a href="dashboard-dentista.php#estoque" class="nav-link">Estoque </a></li>
+                        <li><a href="../backend/logout.php" class="nav-link btn-secondary" style="padding: 0.5rem 1rem; border-radius: 9999px;">Sair</a></li>
+
+                <?php
+                    // --- MENU DO PACIENTE ---
+                    else:
+                ?>
+                        <li><a href="dashboard-paciente.php#consultas" class="nav-link">Minhas Consultas</a></li>
+                        <li><a href="dashboard-paciente.php#agendar" class="nav-link">Agendar</a></li>
+                        <li><a href="dashboard-paciente.php#laudos" class="nav-link">Meus Laudos</a></li>
+                        <li><a href=" " class="nav-link">Olá, <?php echo htmlspecialchars(explode(' ', $nome_usuario)[0]); ?>!</a></li>
+                        <li><a href="../backend/logout.php" class="nav-link btn-secondary" style="padding: 0.5rem 1rem; border-radius: 9999px;">Sair</a></li>
+
+                <?php
+                    endif;
+                // --- MENU PARA VISITANTES (NÃO LOGADOS) ---
+                else:
+                ?>
+                    <li><a href="home.html#home" class="nav-link">Home</a></li>
                     <li><a href="home.html#servicos" class="nav-link">Serviços</a></li>
                     <li><a href="home.html#contatos" class="nav-link">Contatos</a></li>
                     <li><a href="../admin/login-dentista.php" class="nav-link">Sou Dentista</a></li>
@@ -46,4 +63,5 @@
                 <?php endif; ?>
             </ul>
         </nav>
-        <button class="menu-button">&#9776;</button> </header>
+        <button class="menu-button">&#9776;</button>
+    </header>
