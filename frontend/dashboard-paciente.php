@@ -6,8 +6,6 @@ session_start();
 require_once "../backend/conexao.php";
 
 // 1. VERIFICAÇÃO DE AUTENTICAÇÃO E TIPO DE USUÁRIO
-// A verificação agora é feita diretamente no banco de dados.
-
 // Verifica se o usuário está logado
 if (!isset($_SESSION['usuario_id'])) {
     header("Location: login.php");
@@ -80,46 +78,9 @@ function buscarServicos($pdo, $consulta_id) {
     return $stmt->fetchAll(PDO::FETCH_COLUMN);
 }
 
-// 4. NOVA FUNÇÃO PARA BUSCAR TODOS OS DENTISTAS DISPONÍVEIS
-function buscarTodosDentistas($pdo) {
-    $stmt = $pdo->prepare("
-        SELECT 
-            d.usuario_id, 
-            u.nome
-        FROM 
-            Dentista d
-        JOIN 
-            Usuario u ON d.usuario_id = u.usuario_id
-        ORDER BY
-            u.nome
-    ");
-    $stmt->execute();
-    return $stmt->fetchAll(PDO::FETCH_ASSOC);
-}
+// AS FUNÇÕES 'buscarTodosDentistas' E 'buscarServicosECategorias' FORAM REMOVIDAS
+// JÁ QUE SÓ SERÃO NECESSÁRIAS NA PÁGINA 'agendar_consulta.php'
 
-// Função para buscar serviços e categorias (mantida)
-function buscarServicosECategorias($pdo) {
-    $stmt = $pdo->query("
-        SELECT 
-            s.servico_id, 
-            s.nome_servico,
-            s.descricao,
-            s.preco,
-            c.nome AS nome_categoria,
-            c.categoria_id
-        FROM 
-            Servico s
-        JOIN 
-            Categoria c ON s.categoria_id = c.categoria_id
-        ORDER BY
-            c.nome, s.nome_servico
-    ");
-    return $stmt->fetchAll(PDO::FETCH_ASSOC);
-}
-
-// 5. OBTENDO DADOS DO BANCO PARA O JS E O PHP
-$servicosECategorias = buscarServicosECategorias($pdo);
-$todosDentistas = buscarTodosDentistas($pdo);
 ?>
 
 <main class="main-container">
@@ -132,6 +93,9 @@ $todosDentistas = buscarTodosDentistas($pdo);
 
     <section id="consultas" class="section-container">
         <h2 class="section-title">Suas Próximas Consultas</h2>
+        <div class="botoes-navegacao" style="margin-bottom: 2rem; justify-content: flex-start;">
+            <a href="agendar_consulta.php" class="btn-primary">Agendar Nova Consulta</a>
+        </div>
         <div style="overflow-x:auto;">
             <table class="tabela-consultas">
                 <thead>
@@ -180,64 +144,6 @@ $todosDentistas = buscarTodosDentistas($pdo);
         </div>
     </section>
 
-    <section id="agendar" class="section-container">
-        <h2 class="section-title">Agendar Nova Consulta</h2>
-        <form action="agendar_consulta.php" method="POST" id="form-agendamento">
-            <div id="passo-1" class="passo-agendamento">
-                <div class="form-group">
-                    <label for="servico">Primeiro, selecione o serviço que deseja agendar:</label>
-                    <select id="servico" name="servico" required>
-                        <option value="" disabled selected>Selecione um serviço...</option>
-                        <?php foreach ($servicosECategorias as $servico): ?>
-                            <option value="<?php echo $servico['servico_id']; ?>">
-                                <?php echo htmlspecialchars($servico['nome_categoria'] . ' - ' . $servico['nome_servico']); ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-                <div class="botoes-navegacao">
-                    <button type="button" class="btn-primary" onclick="irParaPasso(2)">Continuar</button>
-                </div>
-            </div>
-            <div id="passo-2" class="passo-agendamento" style="display: none;">
-                <div class="form-group">
-                    <label for="dentista">Ótimo! Agora, escolha o profissional:</label>
-                    <select id="dentista" name="dentista" required>
-                        <option value="" disabled selected>Selecione um profissional...</option>
-                        <?php foreach ($todosDentistas as $dentista): ?>
-                            <option value="<?php echo $dentista['usuario_id']; ?>">
-                                <?php echo htmlspecialchars($dentista['nome']); ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-                <div class="botoes-navegacao">
-                    <button type="button" class="btn-secondary" onclick="irParaPasso(1)">Voltar</button>
-                    <button type="button" class="btn-primary" onclick="irParaPasso(3)">Continuar</button>
-                </div>
-            </div>
-            <div id="passo-3" class="passo-agendamento" style="display: none;">
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label for="data">Selecione a data</label>
-                        <input type="date" id="data" name="data" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Horários Disponíveis para a data</label>
-                        <div class="horarios-disponiveis" id="lista-horarios">
-                            <p>Selecione uma data para ver os horários.</p>
-                        </div>
-                        <input type="hidden" id="horario_selecionado" name="horario_selecionado" required>
-                    </div>
-                </div>
-                <div class="botoes-navegacao">
-                    <button type="button" class="btn-secondary" onclick="irParaPasso(2)">Voltar</button>
-                    <button type="submit" class="btn-primary">Confirmar Agendamento</button>
-                </div>
-            </div>
-        </form>
-    </section>
-
     <section id="laudos" class="section-container">
         <h2 class="section-title">Meus Laudos e Documentos</h2>
         <div style="overflow-x:auto;">
@@ -263,77 +169,54 @@ $todosDentistas = buscarTodosDentistas($pdo);
 <style>
     .botoes-navegacao {
         display: flex;
-        justify-content: flex-end;
+        justify-content: flex-end; /* Mantido para o futuro, mas ajustado acima para o botão */
         gap: 1rem;
         margin-top: 2rem;
     }
-</style>
 
-<script>
-    // --- LÓGICA PARA O FORMULÁRIO DE AGENDAMENTO EM PASSOS ---
-
-    // Dados que vieram do banco de dados via PHP
-    const todosDentistas = <?php echo json_encode($todosDentistas); ?>;
-    const servicosECategorias = <?php echo json_encode($servicosECategorias); ?>;
-    
-    // NÓS REMOVEMOS A VARIÁVEL 'dentistasPorCategoria' POIS NÃO É MAIS NECESSÁRIA.
-
-    const selectServico = document.getElementById('servico');
-    const selectDentista = document.getElementById('dentista');
-    const inputData = document.getElementById('data');
-    const divHorarios = document.getElementById('lista-horarios');
-    const inputHorarioSelecionado = document.getElementById('horario_selecionado');
-
-    // A lógica de filtragem foi removida.
-    // Agora o select de dentistas é preenchido diretamente no PHP,
-    // com todos os dentistas disponíveis.
-
-    // Quando o usuário escolhe uma data e dentista, busca os horários disponíveis
-    inputData.addEventListener('change', function() {
-        const data = this.value;
-        const dentistaId = selectDentista.value;
-        
-        if (!data || !dentistaId) {
-            divHorarios.innerHTML = '<p>Selecione um profissional e uma data para ver os horários.</p>';
-            return;
-        }
-
-        // --- PONTO DE INTEGRAÇÃO COM BACKEND ---
-        // Aqui você faria uma requisição (fetch/AJAX) para o backend,
-        // passando a data e o ID do dentista para buscar os horários
-        // realmente disponíveis no banco de dados.
-
-        // Por enquanto, vamos usar os horários simulados:
-        const horariosSimulados = ["09:00", "10:00", "11:00", "14:00", "15:00", "16:00"];
-        divHorarios.innerHTML = ''; // Limpa a lista
-        horariosSimulados.forEach(horario => {
-            const btnHorario = document.createElement('button');
-            btnHorario.type = 'button';
-            btnHorario.className = 'horario-item';
-            btnHorario.textContent = horario;
-            btnHorario.dataset.horario = horario;
-
-            btnHorario.addEventListener('click', function() {
-                document.querySelectorAll('.horario-item.selected').forEach(btn => {
-                    btn.classList.remove('selected');
-                });
-                this.classList.add('selected');
-                inputHorarioSelecionado.value = this.dataset.horario;
-            });
-
-            divHorarios.appendChild(btnHorario);
-        });
-    });
-
-    // Função para navegar entre os passos do formulário
-    function irParaPasso(numeroPasso) {
-        document.querySelectorAll('.passo-agendamento').forEach(passo => {
-            passo.style.display = 'none';
-        });
-        document.getElementById(`passo-${numeroPasso}`).style.display = 'block';
+    /* Estilo para os botões de horário, se você os reutilizar */
+    .horarios-disponiveis {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        max-height: 150px; /* Exemplo */
+        overflow-y: auto; /* Exemplo */
     }
 
-</script>
+    .horario-item {
+        background-color: #f0f0f0;
+        border: 1px solid #ccc;
+        padding: 8px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+
+    .horario-item:hover {
+        background-color: #e0e0e0;
+    }
+
+    .horario-item.selected {
+        background-color: #007bff; /* Cor primária */
+        color: white;
+        border-color: #007bff;
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    @media (min-width: 768px) {
+        .form-grid {
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+</style>
 
 <?php
 // Fecha as tags <body> e <html>
