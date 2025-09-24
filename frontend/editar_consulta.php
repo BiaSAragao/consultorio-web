@@ -2,27 +2,24 @@
 // ==========================================================
 // 1. INCLUSÃO E INICIALIZAÇÃO DO PHP
 // ==========================================================
-// 1.1. Configurações e Conexão (Ajuste o caminho conforme o seu projeto)
-require_once "../backend/conexao.php";  
-
-// Inicia a sessão se necessário (para verificar login, por exemplo)
-// session_start(); 
+// Ajuste o caminho da sua conexão e funções
+require_once "../backend/conexao.php"; 
 
 // 1.2. Verifica o ID da Consulta
 $consulta_id = $_GET['id'] ?? null;
 
 if (!$consulta_id) {
-    // Redireciona se o ID não foi fornecido
     header("Location: dashboard.php");
     exit;
 }
 
 // 1.3. Busca Dados da Consulta Existente
 try {
+    // 1. Busca os dados principais da Consulta
     $stmt_consulta = $pdo->prepare("
         SELECT c.*, D.nome AS nome_dentista 
-        FROM consulta c
-        JOIN usuario D ON c.usuario_dentista = D.usuario_id
+        FROM Consulta c
+        JOIN Usuario D ON c.usuario_dentista = D.usuario_id
         WHERE c.consulta_id = :id
     ");
     $stmt_consulta->bindParam(':id', $consulta_id, PDO::PARAM_INT);
@@ -30,32 +27,42 @@ try {
     $consulta = $stmt_consulta->fetch(PDO::FETCH_ASSOC);
 
     if (!$consulta) {
-        // Redireciona se a consulta não foi encontrada
         header("Location: dashboard.php");
         exit;
     }
+
+    // 2. Busca os IDs de serviço da tabela de associação Consulta_servico
+    $stmt_servicos_existentes = $pdo->prepare("
+        SELECT servico_id 
+        FROM Consulta_servico 
+        WHERE consulta_id = :consulta_id
+    ");
+    $stmt_servicos_existentes->bindParam(':consulta_id', $consulta_id, PDO::PARAM_INT);
+    $stmt_servicos_existentes->execute();
+    
+    // Retorna um array simples dos IDs (ex: [1, 3, 5])
+    $servicos_existentes = $stmt_servicos_existentes->fetchAll(PDO::FETCH_COLUMN); 
 
     // Variáveis para pré-preenchimento
     $dentista_id = $consulta['usuario_dentista'];
     $paciente_id = $consulta['usuario_paciente'];
     $data_form = $consulta['data'];
     $hora_form = $consulta['hora'];
-    $servicos_existentes = json_decode($consulta['servicos_json'], true);
-    $observacoes_form = $consulta['observacoes'];
+    // Tratamento para JSONB de observações (assume que está sendo tratado como string/text)
+    $observacoes_form = $consulta['observacoes'] ?? ''; 
 
 } catch (PDOException $e) {
-    // Tratar erro de banco de dados
     die("Erro ao carregar consulta: " . $e->getMessage());
 }
 
-// 1.4. Busca de Categorias e Serviços (Estrutura idêntica ao agendar_consulta)
+// 1.4. Busca de Categorias e Serviços (Com a correção do SQL)
 try {
-    // Serviços agrupados por categoria (Ajuste a estrutura SQL se necessário)
+    // Busca todos os serviços agrupados por categoria (para renderizar o formulário)
     $stmt_servicos = $pdo->query("
-        SELECT S.servico_id, S.nome AS servico_nome, C.categoria_id, C.nome AS categoria_nome 
-        FROM servico S
-        JOIN categoria C ON S.categoria_id = C.categoria_id
-        ORDER BY C.nome, S.nome
+        SELECT S.servico_id, S.nome_servico, C.categoria_id, C.nome AS categoria_nome 
+        FROM Servico S
+        JOIN Categoria C ON S.categoria_id = C.categoria_id
+        ORDER BY categoria_nome, S.nome_servico
     ");
     $servicos_raw = $stmt_servicos->fetchAll(PDO::FETCH_ASSOC);
 
@@ -74,7 +81,7 @@ try {
     }
 
 } catch (PDOException $e) {
-    die("Erro ao carregar serviços: " . $e->getMessage());
+    die("Erro ao carregar serviços: " . $e->getMessage()); 
 }
 
 
@@ -96,14 +103,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $erro_msg = "Todos os campos obrigatórios (Serviços, Data, Horário) devem ser preenchidos.";
     }
 
-    // 2.1. Checagem de Conflito de Horário (CRÍTICO NA EDIÇÃO)
+    // 2.1. Checagem de Conflito de Horário
     if (empty($erro_msg)) {
         try {
-            // Busca outras consultas para o MESMO dentista, na MESMA data/hora, 
-            // mas EXCLUI a consulta que está sendo editada ($consulta_id).
             $stmt_conflito = $pdo->prepare("
                 SELECT consulta_id 
-                FROM consulta 
+                FROM Consulta 
                 WHERE usuario_dentista = :dentista_id 
                   AND data = :data_nova 
                   AND hora = :hora_nova 
@@ -117,10 +122,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if ($stmt_conflito->rowCount() > 0) {
                 $erro_msg = "O horário selecionado ($data_nova às $hora_nova) não está mais disponível. Por favor, escolha outro.";
-                
-                // Força o formulário a voltar ao Passo 2 para escolher novo horário
-                // $data_form, $hora_form, etc., manterão os valores novos (inválidos) para reexibir.
-                // O JavaScript usará a flag $erro_msg para iniciar no Passo 2.
             }
 
         } catch (PDOException $e) {
@@ -129,35 +130,57 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
 
-    // 2.2. Execução do Update
+    // 2.2. Execução do Update com Transação para Consulta e Consulta_servico
     if (empty($erro_msg)) {
         try {
-            $servicos_json_nova = json_encode($servicos_novos);
+            // Inicia a transação para garantir que Consulta e Consulta_servico sejam atualizadas corretamente
+            $pdo->beginTransaction();
 
+            // 2.2.1. Atualiza a tabela Consulta (data, hora, observacoes)
             $stmt_update = $pdo->prepare("
-                UPDATE consulta SET 
+                UPDATE Consulta SET 
                     data = :data_nova, 
                     hora = :hora_nova, 
-                    servicos_json = :servicos_json_nova, 
                     observacoes = :observacoes_nova
                 WHERE consulta_id = :consulta_id
             ");
             
             $stmt_update->bindParam(':data_nova', $data_nova);
             $stmt_update->bindParam(':hora_nova', $hora_nova);
-            $stmt_update->bindParam(':servicos_json_nova', $servicos_json_nova);
             $stmt_update->bindParam(':observacoes_nova', $observacoes_nova);
             $stmt_update->bindParam(':consulta_id', $consulta_id, PDO::PARAM_INT);
-            
-            if ($stmt_update->execute()) {
-                // Sucesso: Redireciona com mensagem
-                header("Location: dashboard.php?msg=Consulta%20atualizada%20com%20sucesso!");
-                exit;
-            } else {
-                $erro_msg = "Falha ao atualizar a consulta.";
+            $stmt_update->execute();
+
+            // 2.2.2. Remove todos os serviços antigos (limpeza da tabela de associação)
+            $stmt_delete = $pdo->prepare("
+                DELETE FROM Consulta_servico 
+                WHERE consulta_id = :consulta_id
+            ");
+            $stmt_delete->bindParam(':consulta_id', $consulta_id, PDO::PARAM_INT);
+            $stmt_delete->execute();
+
+
+            // 2.2.3. Insere os novos serviços na tabela de associação
+            if (!empty($servicos_novos)) {
+                $stmt_insert = $pdo->prepare("
+                    INSERT INTO Consulta_servico (consulta_id, servico_id) 
+                    VALUES (:consulta_id, :servico_id)
+                ");
+                foreach ($servicos_novos as $servico_id) {
+                    $stmt_insert->bindParam(':consulta_id', $consulta_id, PDO::PARAM_INT);
+                    $stmt_insert->bindParam(':servico_id', $servico_id, PDO::PARAM_INT);
+                    $stmt_insert->execute();
+                }
             }
+            
+            $pdo->commit(); // Confirma todas as operações
+
+            // Sucesso: Redireciona
+            header("Location: dashboard.php?msg=Consulta%20atualizada%20com%20sucesso!");
+            exit;
 
         } catch (PDOException $e) {
+            $pdo->rollBack(); // Desfaz se houver qualquer erro
             $erro_msg = "Erro ao atualizar no banco: " . $e->getMessage();
         }
     }
@@ -180,12 +203,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <title>Editar Consulta - ID #<?= $consulta_id ?></title>
     <link rel="stylesheet" href="caminho/para/seu/estilo.css"> 
     <style>
-        /* Estilos básicos para os passos e a simulação de horários */
+        /* Estilos base */
         .passo-agendamento { display: none; margin-bottom: 20px; }
         .passo-agendamento h2 { border-bottom: 2px solid #ccc; padding-bottom: 10px; margin-bottom: 20px; }
         .nav-buttons button { padding: 10px 20px; margin-right: 10px; cursor: pointer; }
 
-        /* Estilo dos Horários (manter) */
+        /* Estilo dos Horários */
         .horarios-container { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px; }
         .horario-item { 
             padding: 8px 12px; 
@@ -200,15 +223,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             border-color: #007bff;
         }
         
-        /* Estilo dos Serviços (Onde a correção visual é aplicada) */
-        /* Categoria principal (o que você disse que aparece em azul) */
+        /* Estilo dos Serviços (Conforme agendar_consulta) */
         .categoria-container {
             border: 1px solid #eee;
             margin-bottom: 15px;
             border-radius: 5px;
         }
         .categoria-header {
-            background-color: #007bff; /* Azul, como você pediu */
+            background-color: #007bff; /* Azul */
             color: white;
             padding: 10px;
             cursor: pointer;
@@ -216,7 +238,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         .servicos-list {
             padding: 15px;
-            /* A classe que controla a abertura/fechamento do accordion pode ser .collapsed */
         }
         .servico-item label {
             display: block;
@@ -254,18 +275,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </div>
                         <div id="servicos-<?= $id_cat ?>" class="servicos-list">
                             <?php foreach ($categoria['servicos'] as $servico): ?>
-                                <?php $checked = in_array($servico['servico_id'], $servicos_existentes) ? 'checked' : ''; ?>
+                                <?php 
+                                    // Verifica se o ID do serviço está no array dos serviços existentes
+                                    $checked = in_array($servico['servico_id'], $servicos_existentes) ? 'checked' : ''; 
+                                ?>
                                 <div class="servico-item">
                                     <label>
                                         <input type="checkbox" name="servicos[]" value="<?= $servico['servico_id'] ?>" <?= $checked ?>>
-                                        <?= htmlspecialchars($servico['servico_nome']) ?>
+                                        <?= htmlspecialchars($servico['nome_servico']) ?>
                                     </label>
                                 </div>
                             <?php endforeach; ?>
                         </div>
                     </div>
                 <?php endforeach; ?>
-                </div>
+
+            </div>
             
             <input type="hidden" id="servicos_validacao" data-error-message="Selecione pelo menos um serviço.">
 
@@ -310,7 +335,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 
     <script>
-        // Seletores e Variáveis Globais (Mantidos do código anterior)
         const inputData = document.getElementById('data');
         const inputHorarioSelecionado = document.getElementById('horario_selecionado');
         const divHorarios = document.getElementById('horarios_disponiveis');
@@ -319,12 +343,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         const inputServicosValidacao = document.getElementById('servicos_validacao');
         
         const dentistaId = <?= $dentista_id ?>;
-        // Captura o horário atual da consulta para pré-selecionar no formulário
         let horarioOriginal = "<?= htmlspecialchars($hora_form) ?>"; 
         
         
-        // --- LÓGICA DE SERVIÇOS (ABRIR/FECHAR CATEGORIAS) ---
-        // Se você usava uma lógica de 'accordion' no agendar_consulta, esta função é essencial.
+        // --- LÓGICA DE SERVIÇOS (ACORDION) ---
         function toggleServicos(categoriaId) {
             const servicosDiv = document.getElementById(`servicos-${categoriaId}`);
             if (servicosDiv.style.display === 'block') {
@@ -336,11 +358,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         // --- FUNÇÃO DE BUSCA DE HORÁRIOS (SIMULAÇÃO COPIADA) ---
         function buscarHorarios(data, dentistaId) {
-            // Limpa seleções anteriores
             inputHorarioSelecionado.value = '';
-            divHorarios.innerHTML = ''; // Limpa a lista
+            divHorarios.innerHTML = ''; 
 
-            // SIMULAÇÃO COPIADA DO SEU CÓDIGO
+            // SIMULAÇÃO COPIADA
             const hoje = new Date().toISOString().split('T')[0];
             const amanha = new Date(new Date().getTime() + 24 * 60 * 60 * 1000).toISOString().split('T')[0];
             let horariosSimulados = [];
@@ -375,7 +396,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         });
                         this.classList.add('selecionado');
                         inputHorarioSelecionado.value = this.dataset.horario;
-                        horarioOriginal = this.dataset.horario; // Mantém a seleção
+                        horarioOriginal = this.dataset.horario; 
                     });
 
                     divHorarios.appendChild(btnHorario);
@@ -384,9 +405,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
 
-        // --- LÓGICA DE NAVEGAÇÃO ENTRE PASSOS (MANTIDA) ---
+        // --- LÓGICA DE NAVEGAÇÃO ENTRE PASSOS ---
         let passoInicial = 1;
-        // Se houver erro de conflito (erro_msg do PHP), inicia no Passo 2
         if (alertaErro) {
             passoInicial = 2;
         }
@@ -409,7 +429,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     valido = false;
                 }
             } else if (passoAtual === 2) {
-                // Validação de horário no Passo 2
                 if (!inputData.value || !inputHorarioSelecionado.value) {
                     alert("Selecione uma data e um horário para continuar.");
                     valido = false;
@@ -429,12 +448,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         document.addEventListener('DOMContentLoaded', () => {
             irParaPasso(passoInicial);
             
-            // Inicia com os horários carregados se já houver data no formulário (útil na reabertura por erro)
             if (inputData.value) {
                 buscarHorarios(inputData.value, dentistaId);
             }
             
-            // Garante que todas as categorias comecem fechadas, exceto a primeira, se for a sua lógica
+            // Inicia todas as categorias fechadas (comportamento de accordion)
             document.querySelectorAll('.servicos-list').forEach(div => {
                 div.style.display = 'none'; 
             });
