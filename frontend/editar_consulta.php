@@ -48,16 +48,14 @@ try {
     $paciente_id = $consulta['usuario_paciente'];
     $data_form = $consulta['data'];
     $hora_form = $consulta['hora'];
-    // Tratamento para JSONB de observações (assume que está sendo tratado como string/text)
     $observacoes_form = $consulta['observacoes'] ?? ''; 
 
 } catch (PDOException $e) {
     die("Erro ao carregar consulta: " . $e->getMessage());
 }
 
-// 1.4. Busca de Categorias e Serviços (Com a correção do SQL)
+// 1.4. Busca de Categorias e Serviços
 try {
-    // Busca todos os serviços agrupados por categoria (para renderizar o formulário)
     $stmt_servicos = $pdo->query("
         SELECT S.servico_id, S.nome_servico, C.categoria_id, C.nome AS categoria_nome 
         FROM Servico S
@@ -133,7 +131,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // 2.2. Execução do Update com Transação para Consulta e Consulta_servico
     if (empty($erro_msg)) {
         try {
-            // Inicia a transação para garantir que Consulta e Consulta_servico sejam atualizadas corretamente
             $pdo->beginTransaction();
 
             // 2.2.1. Atualiza a tabela Consulta (data, hora, observacoes)
@@ -193,65 +190,112 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $observacoes_form = $observacoes_nova;
     }
 }
+
+
+// ==========================================================
+// 3. INCLUSÃO DO HEADER E INÍCIO DO HTML
+// ==========================================================
+// Ajuste o caminho para o seu header.php
+include 'templates/header.php';
 ?>
 
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Editar Consulta - ID #<?= $consulta_id ?></title>
-    <link rel="stylesheet" href="caminho/para/seu/estilo.css"> 
-    <style>
-        /* Estilos base */
-        .passo-agendamento { display: none; margin-bottom: 20px; }
-        .passo-agendamento h2 { border-bottom: 2px solid #ccc; padding-bottom: 10px; margin-bottom: 20px; }
-        .nav-buttons button { padding: 10px 20px; margin-right: 10px; cursor: pointer; }
+<style>
+    /* Estilos para navegação entre passos */
+    .passo-agendamento { display: none; margin-bottom: 2rem; }
+    .passo-agendamento h2 { 
+        font-size: 1.5rem; 
+        font-weight: 700; 
+        color: #1f2937; 
+        border-bottom: 2px solid #e5e7eb; 
+        padding-bottom: 0.75rem; 
+        margin-bottom: 1.5rem; 
+    }
+    .nav-buttons { margin-top: 1.5rem; }
+    .nav-buttons button { 
+        padding: 0.75rem 1.5rem; 
+        border: none; 
+        border-radius: 0.5rem; 
+        font-weight: 600; 
+        cursor: pointer; 
+        transition: background-color 0.3s ease;
+    }
 
-        /* Estilo dos Horários */
-        .horarios-container { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px; }
-        .horario-item { 
-            padding: 8px 12px; 
-            border: 1px solid #ccc; 
-            border-radius: 4px; 
-            cursor: pointer; 
-            background-color: #f9f9f9;
-        }
-        .horario-item.selecionado { 
-            background-color: #007bff; /* Azul */
-            color: white; 
-            border-color: #007bff;
-        }
-        
-        /* Estilo dos Serviços (Conforme agendar_consulta) */
-        .categoria-container {
-            border: 1px solid #eee;
-            margin-bottom: 15px;
-            border-radius: 5px;
-        }
-        .categoria-header {
-            background-color: #007bff; /* Azul */
-            color: white;
-            padding: 10px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-        .servicos-list {
-            padding: 15px;
-        }
-        .servico-item label {
-            display: block;
-            margin-bottom: 5px;
-            cursor: pointer;
-        }
-    </style>
-</head>
-<body>
+    /* Estilo dos Botões de Navegação */
+    .nav-buttons button:not([type="submit"]) {
+        background-color: #6b7280; /* gray-500 */
+        color: white;
+    }
+    .nav-buttons button:not([type="submit"]):hover {
+        background-color: #4b5563; /* gray-700 */
+    }
+    .nav-buttons button[type="submit"] {
+        background-color: #10b981; /* green-500 */
+        color: white;
+    }
+    .nav-buttons button[type="submit"]:hover {
+        background-color: #059669; /* green-700 */
+    }
 
+    /* Estilo dos Serviços (Acordion e Azul/Dourado) */
+    .categoria-container {
+        border: 1px solid #d1d5db; 
+        margin-bottom: 1rem;
+        border-radius: 0.5rem;
+        overflow: hidden; 
+    }
+    .categoria-header {
+        background-color: #cab078; /* Cor da sua paleta */
+        color: white;
+        padding: 1rem;
+        cursor: pointer;
+        font-weight: 700;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .servicos-list {
+        padding: 1rem;
+        background-color: #fff;
+        border-top: 1px solid #f3f4f6; 
+    }
+    .servico-item label {
+        display: flex;
+        align-items: center;
+        margin-bottom: 0.5rem;
+        cursor: pointer;
+        font-weight: 500;
+        color: #374151;
+    }
+    .servico-item input[type="checkbox"] {
+        margin-right: 0.75rem;
+        width: 1rem;
+        height: 1rem;
+        accent-color: #cab078; 
+    }
+
+    /* Estilos Específicos para a textarea (copiado do form-group) */
+    textarea {
+        padding: 0.75rem;
+        border: 1px solid #d1d5db;
+        border-radius: 0.5rem;
+        font-size: 1rem;
+        background-color: #f9fafb;
+        transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        width: 100%; 
+        box-sizing: border-box; 
+    }
+    textarea:focus {
+        outline: none;
+        border-color: #cab078;
+        box-shadow: 0 0 0 3px rgba(202, 176, 120, 0.3);
+    }
+</style>
+
+<div style="max-width: 900px; margin: 2rem auto; padding: 1.5rem; background-color: white; border-radius: 0.75rem; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);">
     <h1>Editar Consulta #<?= $consulta_id ?></h1>
 
     <?php if (!empty($erro_msg)): ?>
-        <div id="alerta-erro" style="color: red; border: 1px solid red; padding: 10px; margin-bottom: 20px;">
+        <div id="alerta-erro" style="color: #991b1b; background-color: #fee2e2; border: 1px solid #fca5a5; padding: 1rem; margin-bottom: 1.5rem; border-radius: 0.5rem; font-weight: 600;">
             <?= htmlspecialchars($erro_msg) ?>
         </div>
     <?php endif; ?>
@@ -272,11 +316,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <div class="categoria-container">
                         <div class="categoria-header" onclick="toggleServicos(<?= $id_cat ?>)">
                             <?= htmlspecialchars($categoria['nome']) ?>
+                            <span>&#9660;</span>
                         </div>
                         <div id="servicos-<?= $id_cat ?>" class="servicos-list">
                             <?php foreach ($categoria['servicos'] as $servico): ?>
                                 <?php 
-                                    // Verifica se o ID do serviço está no array dos serviços existentes
                                     $checked = in_array($servico['servico_id'], $servicos_existentes) ? 'checked' : ''; 
                                 ?>
                                 <div class="servico-item">
@@ -302,16 +346,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div id="passo-2" class="passo-agendamento">
             <h2>Passo 2: Data e Horário</h2>
 
-            <label for="data">Data:</label>
-            <input type="date" name="data" id="data" value="<?= htmlspecialchars($data_form) ?>" required>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="data">Data:</label>
+                    <input type="date" name="data" id="data" value="<?= htmlspecialchars($data_form) ?>" required>
+                </div>
+            </div>
 
-            <h3 style="margin-top: 20px;">Horários Disponíveis (Simulação):</h3>
-            <div id="horarios_disponiveis" class="horarios-container">
-                <p>Selecione uma data acima.</p>
+            <h3 style="font-size: 1.25rem; font-weight: 600; color: #374151; margin-top: 1.5rem;">Horários Disponíveis (Simulação):</h3>
+            <div id="horarios_disponiveis" class="horarios-disponiveis">
+                <p style="color: #6b7280;">Selecione uma data acima.</p>
             </div>
             <input type="hidden" id="horario_validacao" data-error-message="Selecione um horário.">
 
-            <div class="nav-buttons" style="margin-top: 20px;">
+            <div class="nav-buttons" style="margin-top: 2rem;">
                 <button type="button" onclick="irParaPasso(1)">Anterior</button>
                 <button type="button" onclick="validarEPularPasso(2, 3)">Próximo</button>
             </div>
@@ -320,143 +368,151 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div id="passo-3" class="passo-agendamento">
             <h2>Passo 3: Observações e Confirmação</h2>
             
-            <label for="observacoes">Observações:</label>
-            <textarea name="observacoes" id="observacoes" rows="5" placeholder="Adicione observações sobre a consulta."><?= htmlspecialchars($observacoes_form) ?></textarea>
+            <div class="form-group">
+                <label for="observacoes">Observações:</label>
+                <textarea name="observacoes" id="observacoes" rows="5" placeholder="Adicione observações sobre a consulta."><?= htmlspecialchars($observacoes_form) ?></textarea>
+            </div>
 
-            <p style="margin-top: 15px;">**Você está reagendando a consulta #<?= $consulta_id ?>.**</p>
+            <p style="margin-top: 1.5rem; font-weight: 500; color: #4b5563;">**Você está reagendando a consulta #<?= $consulta_id ?>.**</p>
 
             <div class="nav-buttons">
                 <button type="button" onclick="irParaPasso(2)">Anterior</button>
-                <button type="submit" style="background-color: green; color: white;">Confirmar Edição</button>
+                <button type="submit">Confirmar Edição</button>
             </div>
         </div>
 
     </form>
+</div>
 
 
-    <script>
-        const inputData = document.getElementById('data');
-        const inputHorarioSelecionado = document.getElementById('horario_selecionado');
-        const divHorarios = document.getElementById('horarios_disponiveis');
-        const alertaErro = document.getElementById('alerta-erro');
-        const checkboxesServicos = document.querySelectorAll('input[name="servicos[]"]');
-        const inputServicosValidacao = document.getElementById('servicos_validacao');
-        
-        const dentistaId = <?= $dentista_id ?>;
-        let horarioOriginal = "<?= htmlspecialchars($hora_form) ?>"; 
-        
-        
-        // --- LÓGICA DE SERVIÇOS (ACORDION) ---
-        function toggleServicos(categoriaId) {
-            const servicosDiv = document.getElementById(`servicos-${categoriaId}`);
-            if (servicosDiv.style.display === 'block') {
-                servicosDiv.style.display = 'none';
-            } else {
-                servicosDiv.style.display = 'block';
-            }
+<script>
+    const inputData = document.getElementById('data');
+    const inputHorarioSelecionado = document.getElementById('horario_selecionado');
+    const divHorarios = document.getElementById('horarios_disponiveis');
+    const alertaErro = document.getElementById('alerta-erro');
+    const checkboxesServicos = document.querySelectorAll('input[name="servicos[]"]');
+    const inputServicosValidacao = document.getElementById('servicos_validacao');
+    
+    const dentistaId = <?= $dentista_id ?>;
+    let horarioOriginal = "<?= htmlspecialchars($hora_form) ?>"; 
+    
+    
+    // --- LÓGICA DE SERVIÇOS (ACORDION) ---
+    function toggleServicos(categoriaId) {
+        const servicosDiv = document.getElementById(`servicos-${categoriaId}`);
+        if (servicosDiv.style.display === 'block') {
+            servicosDiv.style.display = 'none';
+        } else {
+            servicosDiv.style.display = 'block';
         }
-        
-        // --- FUNÇÃO DE BUSCA DE HORÁRIOS (SIMULAÇÃO COPIADA) ---
-        function buscarHorarios(data, dentistaId) {
-            inputHorarioSelecionado.value = '';
-            divHorarios.innerHTML = ''; 
+    }
+    
+    // --- FUNÇÃO DE BUSCA DE HORÁRIOS (SIMULAÇÃO) ---
+    function buscarHorarios(data, dentistaId) {
+        inputHorarioSelecionado.value = '';
+        divHorarios.innerHTML = ''; 
 
-            // SIMULAÇÃO COPIADA
-            const hoje = new Date().toISOString().split('T')[0];
-            const amanha = new Date(new Date().getTime() + 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-            let horariosSimulados = [];
+        // SIMULAÇÃO
+        const hoje = new Date().toISOString().split('T')[0];
+        const amanha = new Date(new Date().getTime() + 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+        let horariosSimulados = [];
 
-            if (data === hoje) {
-                horariosSimulados = ["15:00", "16:00", "17:00"]; 
-            } else if (data === amanha) {
-                horariosSimulados = ["08:00", "09:30", "11:00", "14:00", "15:30"];
-            } else {
-                 horariosSimulados = ["09:00", "10:00", "11:00", "14:00", "15:00", "16:00"];
-            }
+        if (data === hoje) {
+            horariosSimulados = ["15:00", "16:00", "17:00"]; 
+        } else if (data === amanha) {
+            horariosSimulados = ["08:00", "09:30", "11:00", "14:00", "15:30"];
+        } else {
+             horariosSimulados = ["09:00", "10:00", "11:00", "14:00", "15:00", "16:00"];
+        }
 
-            // Renderiza os botões
-            if (horariosSimulados.length === 0) {
-                  divHorarios.innerHTML = '<p>Nenhum horário disponível para esta data.</p>';
-            } else {
-                horariosSimulados.forEach(horario => {
-                    const btnHorario = document.createElement('span');
-                    btnHorario.className = 'horario-item';
-                    btnHorario.textContent = horario;
-                    btnHorario.dataset.horario = horario;
+        if (horariosSimulados.length === 0) {
+              divHorarios.innerHTML = '<p style="color: #6b7280;">Nenhum horário disponível para esta data.</p>';
+        } else {
+            horariosSimulados.forEach(horario => {
+                const btnHorario = document.createElement('span');
+                // Usando a classe 'horario-item' do dashboard.css
+                btnHorario.className = 'horario-item'; 
+                btnHorario.textContent = horario;
+                btnHorario.dataset.horario = horario;
 
-                    // PRÉ-SELEÇÃO PARA EDIÇÃO
-                    if (horario === horarioOriginal) {
-                        btnHorario.classList.add('selecionado');
-                        inputHorarioSelecionado.value = horario; 
-                    }
+                // PRÉ-SELEÇÃO PARA EDIÇÃO
+                if (horario === horarioOriginal) {
+                    btnHorario.classList.add('selected'); // Classe 'selected' do dashboard.css
+                    inputHorarioSelecionado.value = horario; 
+                }
 
-                    btnHorario.addEventListener('click', function() {
-                        document.querySelectorAll('.horario-item.selecionado').forEach(btn => {
-                            btn.classList.remove('selecionado');
-                        });
-                        this.classList.add('selecionado');
-                        inputHorarioSelecionado.value = this.dataset.horario;
-                        horarioOriginal = this.dataset.horario; 
+                btnHorario.addEventListener('click', function() {
+                    document.querySelectorAll('.horario-item.selected').forEach(btn => {
+                        btn.classList.remove('selected');
                     });
-
-                    divHorarios.appendChild(btnHorario);
+                    this.classList.add('selected');
+                    inputHorarioSelecionado.value = this.dataset.horario;
+                    horarioOriginal = this.dataset.horario; 
                 });
-            }
-        }
 
-
-        // --- LÓGICA DE NAVEGAÇÃO ENTRE PASSOS ---
-        let passoInicial = 1;
-        if (alertaErro) {
-            passoInicial = 2;
-        }
-
-        function irParaPasso(numeroPasso) {
-            document.querySelectorAll('.passo-agendamento').forEach(passo => {
-                passo.style.display = 'none';
+                divHorarios.appendChild(btnHorario);
             });
-            document.getElementById(`passo-${numeroPasso}`).style.display = 'block';
-            window.scrollTo(0, 0); 
         }
+    }
 
-        function validarEPularPasso(passoAtual, proximoPasso) {
-            let valido = true;
-            
-            if (passoAtual === 1) {
-                const servicosSelecionados = Array.from(checkboxesServicos).some(checkbox => checkbox.checked);
-                if (!servicosSelecionados) {
-                    alert(inputServicosValidacao.dataset.errorMessage);
-                    valido = false;
-                }
-            } else if (passoAtual === 2) {
-                if (!inputData.value || !inputHorarioSelecionado.value) {
-                    alert("Selecione uma data e um horário para continuar.");
-                    valido = false;
-                }
+
+    // --- LÓGICA DE NAVEGAÇÃO ENTRE PASSOS ---
+    let passoInicial = 1;
+    if (alertaErro) {
+        passoInicial = 2;
+    }
+
+    function irParaPasso(numeroPasso) {
+        document.querySelectorAll('.passo-agendamento').forEach(passo => {
+            passo.style.display = 'none';
+        });
+        document.getElementById(`passo-${numeroPasso}`).style.display = 'block';
+        window.scrollTo(0, 0); 
+    }
+
+    function validarEPularPasso(passoAtual, proximoPasso) {
+        let valido = true;
+        
+        if (passoAtual === 1) {
+            const servicosSelecionados = Array.from(checkboxesServicos).some(checkbox => checkbox.checked);
+            if (!servicosSelecionados) {
+                alert(inputServicosValidacao.dataset.errorMessage);
+                valido = false;
             }
-            
-            if (valido) {
-                irParaPasso(proximoPasso);
+        } else if (passoAtual === 2) {
+            if (!inputData.value || !inputHorarioSelecionado.value) {
+                alert("Selecione uma data e um horário para continuar.");
+                valido = false;
             }
         }
+        
+        if (valido) {
+            irParaPasso(proximoPasso);
+        }
+    }
 
-        // --- INICIALIZAÇÃO E LISTENERS ---
-        inputData.addEventListener('change', function() {
+    // --- INICIALIZAÇÃO E LISTENERS ---
+    inputData.addEventListener('change', function() {
+        buscarHorarios(inputData.value, dentistaId);
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+        irParaPasso(passoInicial);
+        
+        if (inputData.value) {
             buscarHorarios(inputData.value, dentistaId);
+        }
+        
+        // Inicia todas as categorias fechadas (comportamento de accordion)
+        document.querySelectorAll('.servicos-list').forEach(div => {
+            div.style.display = 'none'; 
         });
+    });
+</script>
 
-        document.addEventListener('DOMContentLoaded', () => {
-            irParaPasso(passoInicial);
-            
-            if (inputData.value) {
-                buscarHorarios(inputData.value, dentistaId);
-            }
-            
-            // Inicia todas as categorias fechadas (comportamento de accordion)
-            document.querySelectorAll('.servicos-list').forEach(div => {
-                div.style.display = 'none'; 
-            });
-        });
-    </script>
-</body>
-</html>
+<?php 
+// ==========================================================
+// 6. INCLUSÃO DO FOOTER
+// ==========================================================
+include 'templates/footer.php';
+?>
