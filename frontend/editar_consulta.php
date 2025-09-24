@@ -28,6 +28,7 @@ if (!$consulta) {
     exit();
 }
 
+// Assumindo que o dentista_id é fixo na edição
 $dentista_id = $consulta['usuario_dentista'];
 
 // 2. BUSCAR DADOS PARA O FORMULÁRIO (Inicialização dos valores)
@@ -44,7 +45,7 @@ $servicos_atuais = array_column($stmt_servicos_atuais->fetchAll(PDO::FETCH_ASSOC
 
 $obs = json_decode($consulta['observacoes'], true);
 
-// Preenche os dados do formulário com POST se houver um erro, ou com os dados atuais
+// Preenche os dados do formulário com POST (se houve erro) ou com os dados atuais
 $data_form = $_POST['data'] ?? $consulta['data'];
 $hora_form = $_POST['hora'] ?? $consulta['hora'];
 $servicos_form = $_POST['servicos'] ?? $servicos_atuais;
@@ -58,6 +59,8 @@ $mensagem_erro = $_GET['msg_erro'] ?? '';
 
 // 3. PROCESSAMENTO POST (SALVAR ALTERAÇÕES)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    
+    // As variáveis de formulário já estão carregadas acima: $data_form, $hora_form, etc.
     
     // --- Lógica de Validação e Conflito no Backend ---
     
@@ -74,11 +77,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $conflito = $stmt_conflito->fetch(PDO::FETCH_ASSOC);
 
     if ($conflito) {
-        // Conflito encontrado, interrompe e redireciona com mensagem de erro e dados do formulário
-        $erro_msg_url = urlencode("O horário selecionado ($data_form às $hora_form) já está ocupado por outro agendamento. Por favor, escolha outra data/hora.");
+        // Conflito encontrado, interrompe e redireciona com mensagem de erro
+        $erro_msg = "O horário selecionado ($hora_form de $data_form) já está ocupado por outro agendamento para o Dr(a). Fixo. Por favor, escolha outra data/hora.";
+        $erro_msg_url = urlencode($erro_msg);
         
-        // Redireciona de volta para a mesma página, com erro e os dados passados para a URL
-        // IMPORTANTE: Não passamos todos os dados, apenas o erro. O JavaScript forçará o Passo 2
+        // Redireciona de volta para a mesma página, forçando a reexibição do erro
         header("Location: editar_consulta.php?id=$consulta_id&msg_erro=$erro_msg_url");
         exit;
 
@@ -200,21 +203,21 @@ include 'templates/header.php';
 
             <div id="passo-2" class="passo-agendamento" style="display: none;">
                 <h3 class="subsection-title">2. Data e Hora</h3>
-                <div class="form-grid">
+                
+                <div class="form-group">
+                    <label for="data">Data da Consulta</label>
+                    <input type="date" id="data" name="data" 
+                           value="<?= htmlspecialchars($data_form) ?>" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Selecione um horário:</label>
+                    <input type="hidden" name="hora" id="horario_selecionado" 
+                           value="<?= htmlspecialchars($hora_form) ?>" required data-error-message="Selecione um horário para continuar.">
                     
-                    <div class="form-group">
-                        <label for="data">Data da Consulta</label>
-                        <input type="date" id="data" name="data" 
-                               value="<?= htmlspecialchars($data_form) ?>" required>
+                    <div id="horarios_disponiveis" class="horarios-disponiveis">
+                        <p class="aviso-horarios">Selecione uma data acima para carregar os horários.</p>
                     </div>
-
-                    <div class="form-group">
-                        <label for="hora">Hora da Consulta</label>
-                        <input type="time" id="hora" name="hora" 
-                               value="<?= htmlspecialchars($hora_form) ?>" required>
-                        <p style="margin-top: 10px; color: #666; font-size: 0.9em;">**Se você alterar a data/hora, o sistema verificará conflitos de agenda ao salvar.**</p>
-                    </div>
-
                 </div>
 
                 <div class="botoes-navegacao">
@@ -253,63 +256,143 @@ include 'templates/header.php';
 </main>
 
 <script>
-    // Seletores necessários para as funções
+    // Seletores necessários
     const checkboxesServicos = document.querySelectorAll('input[name="servicos[]"]');
     const inputServicosValidacao = document.getElementById('servicos_validacao');
     const inputData = document.getElementById('data');
-    const inputHora = document.getElementById('hora');
+    const inputHorarioSelecionado = document.getElementById('horario_selecionado');
+    const divHorarios = document.getElementById('horarios_disponiveis');
     const alertaErro = document.getElementById('alerta-erro');
     
+    // Variáveis PHP injetadas no JS
+    const dentistaId = <?= $dentista_id ?>;
+    const consultaId = <?= $consulta_id ?>;
+    
+    // ==========================================================
+    // LÓGICA DE BUSCA E RENDERIZAÇÃO DE HORÁRIOS (AJAX)
+    // ==========================================================
+
+    function buscarHorarios() {
+        const dataSelecionada = inputData.value;
+        divHorarios.innerHTML = '<p class="loading">Carregando horários...</p>';
+        
+        if (!dataSelecionada) {
+            divHorarios.innerHTML = '<p class="aviso-horarios">Selecione uma data para carregar os horários.</p>';
+            inputHorarioSelecionado.value = '';
+            return;
+        }
+
+        // A URL envia o ID da consulta para que o backend IGNORE o horário atual dela.
+        const url = `../backend/buscar_horarios.php?dentista_id=${dentistaId}&data=${dataSelecionada}&consulta_id=${consultaId}`;
+        
+        fetch(url)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Erro na rede ou no servidor: ' + response.statusText);
+                }
+                return response.json();
+            })
+            .then(horarios => {
+                renderizarHorarios(horarios);
+            })
+            .catch(error => {
+                console.error('Erro ao buscar horários:', error);
+                divHorarios.innerHTML = '<p class="erro-horarios">Erro ao carregar horários. Tente novamente.</p>';
+                inputHorarioSelecionado.value = '';
+            });
+    }
+
+    function renderizarHorarios(horarios) {
+        divHorarios.innerHTML = '';
+        
+        if (horarios.length === 0) {
+            divHorarios.innerHTML = '<p class="aviso-horarios">Nenhum horário disponível nesta data.</p>';
+            inputHorarioSelecionado.value = '';
+            return;
+        }
+
+        horarios.forEach(horario => {
+            const slot = document.createElement('span');
+            slot.classList.add('horario-item');
+            slot.textContent = horario;
+            slot.dataset.hora = horario;
+
+            // Marca o horário se ele for o selecionado no campo hidden (útil no carregamento inicial)
+            if (horario === inputHorarioSelecionado.value) {
+                slot.classList.add('selecionado');
+            }
+            
+            slot.addEventListener('click', function() {
+                // Remove a seleção de todos os slots
+                document.querySelectorAll('.horario-item').forEach(item => item.classList.remove('selecionado'));
+                
+                // Adiciona a seleção no slot clicado
+                this.classList.add('selecionado');
+                
+                // Atualiza o campo hidden que será enviado no POST
+                inputHorarioSelecionado.value = this.dataset.hora;
+            });
+
+            divHorarios.appendChild(slot);
+        });
+    }
+
+    // ==========================================================
+    // LÓGICA DE NAVEGAÇÃO E VALIDAÇÃO DE FORMULÁRIO
+    // ==========================================================
+
     // Identifica o passo inicial. Se houver erro de conflito, força o Passo 2.
     let passoInicial = 1;
     if (alertaErro) {
-         // Se houver mensagem de erro (conflito de horário), volta ao passo 2
         passoInicial = 2;
     }
 
-    // Função para navegar entre os passos do formulário
     function irParaPasso(numeroPasso) {
         document.querySelectorAll('.passo-agendamento').forEach(passo => {
             passo.style.display = 'none';
         });
         document.getElementById(`passo-${numeroPasso}`).style.display = 'block';
-        window.scrollTo(0, 0); // Rola para o topo da página ao mudar o passo
+        window.scrollTo(0, 0); 
     }
 
-    // Função para validar o passo atual antes de avançar
     function validarEPularPasso(passoAtual, proximoPasso) {
         let valido = true;
         
         if (passoAtual === 1) {
-            // Validação de serviços: deve haver pelo menos um selecionado
             const servicosSelecionados = Array.from(checkboxesServicos).some(checkbox => checkbox.checked);
             if (!servicosSelecionados) {
                 alert(inputServicosValidacao.dataset.errorMessage);
                 valido = false;
             } else {
-                inputServicosValidacao.value = 'selecionado'; // Preenche o campo hidden
+                inputServicosValidacao.value = 'selecionado';
             }
         } else if (passoAtual === 2) {
-            // Validação de data e hora
-            if (!inputData.value || !inputHora.value) {
-                alert('A data e a hora da consulta devem ser preenchidas.');
+            // Validação: deve ter uma data e um horário selecionado (no campo hidden)
+            if (!inputData.value || !inputHorarioSelecionado.value) {
+                alert(inputHorarioSelecionado.dataset.errorMessage);
                 valido = false;
             }
         }
         
-        // Se todas as validações do passo atual passarem, avança
         if (valido) {
             irParaPasso(proximoPasso);
         }
     }
 
+    // Event Listeners e Inicialização
+    inputData.addEventListener('change', buscarHorarios);
 
-    // Inicializa o formulário no primeiro passo ou no passo com erro
     document.addEventListener('DOMContentLoaded', () => {
         irParaPasso(passoInicial);
+        
+        // No carregamento, se já houver data, carrega os horários
+        if (inputData.value) {
+            buscarHorarios();
+        }
     });
 </script>
 
 <?php 
+// Fecha as tags <body> e <html>
 include 'templates/footer.php';
 ?>
