@@ -80,44 +80,24 @@ function buscarServicos($pdo, $consulta_id) {
     return $stmt->fetchAll(PDO::FETCH_COLUMN);
 }
 
-// 4. FUNÇÃO PARA BUSCAR DENTISTAS POR ESPECIALIDADE (Categoria)
-function buscarDentistasPorEspecialidade($pdo) {
-    $dentistas = [];
-    
-    // Consulta para buscar as categorias e os dentistas
-    $stmt = $pdo->query("
+// 4. NOVA FUNÇÃO PARA BUSCAR TODOS OS DENTISTAS DISPONÍVEIS
+function buscarTodosDentistas($pdo) {
+    $stmt = $pdo->prepare("
         SELECT 
-            d.usuario_id,
-            u.nome,
-            s.nome_servico,
-            s.categoria_id
+            d.usuario_id, 
+            u.nome
         FROM 
             Dentista d
         JOIN 
             Usuario u ON d.usuario_id = u.usuario_id
-        JOIN
-            Servico s ON d.usuario_id = s.usuario_dentista
+        ORDER BY
+            u.nome
     ");
-    
-    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-        $categoria_id = $row['categoria_id'];
-        $dentista_id = $row['usuario_id'];
-        $dentista_nome = $row['nome'];
-        
-        if (!isset($dentistas[$categoria_id])) {
-            $dentistas[$categoria_id] = [];
-        }
-        
-        $dentistas[$categoria_id][] = [
-            'id' => $dentista_id,
-            'nome' => $dentista_nome
-        ];
-    }
-    
-    return $dentistas;
+    $stmt->execute();
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
-// Função para buscar serviços e categorias
+// Função para buscar serviços e categorias (mantida)
 function buscarServicosECategorias($pdo) {
     $stmt = $pdo->query("
         SELECT 
@@ -125,7 +105,8 @@ function buscarServicosECategorias($pdo) {
             s.nome_servico,
             s.descricao,
             s.preco,
-            c.nome AS nome_categoria
+            c.nome AS nome_categoria,
+            c.categoria_id
         FROM 
             Servico s
         JOIN 
@@ -138,7 +119,7 @@ function buscarServicosECategorias($pdo) {
 
 // 5. OBTENDO DADOS DO BANCO PARA O JS E O PHP
 $servicosECategorias = buscarServicosECategorias($pdo);
-$dentistasPorEspecialidade = buscarDentistasPorEspecialidade($pdo);
+$todosDentistas = buscarTodosDentistas($pdo);
 ?>
 
 <main class="main-container">
@@ -201,14 +182,14 @@ $dentistasPorEspecialidade = buscarDentistasPorEspecialidade($pdo);
 
     <section id="agendar" class="section-container">
         <h2 class="section-title">Agendar Nova Consulta</h2>
-        <form action="../backend/agendar_consulta.php" method="POST" id="form-agendamento">
+        <form action="agendar_consulta.php" method="POST" id="form-agendamento">
             <div id="passo-1" class="passo-agendamento">
                 <div class="form-group">
                     <label for="servico">Primeiro, selecione o serviço que deseja agendar:</label>
                     <select id="servico" name="servico" required>
                         <option value="" disabled selected>Selecione um serviço...</option>
                         <?php foreach ($servicosECategorias as $servico): ?>
-                            <option value="<?php echo $servico['servico_id']; ?>" data-categoria="<?php echo $servico['categoria_id']; ?>">
+                            <option value="<?php echo $servico['servico_id']; ?>">
                                 <?php echo htmlspecialchars($servico['nome_categoria'] . ' - ' . $servico['nome_servico']); ?>
                             </option>
                         <?php endforeach; ?>
@@ -222,7 +203,12 @@ $dentistasPorEspecialidade = buscarDentistasPorEspecialidade($pdo);
                 <div class="form-group">
                     <label for="dentista">Ótimo! Agora, escolha o profissional:</label>
                     <select id="dentista" name="dentista" required>
-                        <option value="">Escolha uma especialidade primeiro...</option>
+                        <option value="" disabled selected>Selecione um profissional...</option>
+                        <?php foreach ($todosDentistas as $dentista): ?>
+                            <option value="<?php echo $dentista['usuario_id']; ?>">
+                                <?php echo htmlspecialchars($dentista['nome']); ?>
+                            </option>
+                        <?php endforeach; ?>
                     </select>
                 </div>
                 <div class="botoes-navegacao">
@@ -287,8 +273,10 @@ $dentistasPorEspecialidade = buscarDentistasPorEspecialidade($pdo);
     // --- LÓGICA PARA O FORMULÁRIO DE AGENDAMENTO EM PASSOS ---
 
     // Dados que vieram do banco de dados via PHP
+    const todosDentistas = <?php echo json_encode($todosDentistas); ?>;
     const servicosECategorias = <?php echo json_encode($servicosECategorias); ?>;
-    const dentistasPorCategoria = <?php echo json_encode($dentistasPorEspecialidade); ?>;
+    
+    // NÓS REMOVEMOS A VARIÁVEL 'dentistasPorCategoria' POIS NÃO É MAIS NECESSÁRIA.
 
     const selectServico = document.getElementById('servico');
     const selectDentista = document.getElementById('dentista');
@@ -296,28 +284,9 @@ $dentistasPorEspecialidade = buscarDentistasPorEspecialidade($pdo);
     const divHorarios = document.getElementById('lista-horarios');
     const inputHorarioSelecionado = document.getElementById('horario_selecionado');
 
-    // Quando o usuário muda o serviço, atualiza a lista de dentistas
-    selectServico.addEventListener('change', function() {
-        const categoriaId = this.options[this.selectedIndex].dataset.categoria;
-        const dentistas = dentistasPorCategoria[categoriaId] || [];
-
-        selectDentista.innerHTML = '<option value="" disabled selected>Selecione um profissional...</option>';
-        
-        if (dentistas.length > 0) {
-            dentistas.forEach(dentista => {
-                const option = document.createElement('option');
-                option.value = dentista.id;
-                option.textContent = dentista.nome;
-                selectDentista.appendChild(option);
-            });
-        } else {
-             const option = document.createElement('option');
-             option.value = "";
-             option.textContent = "Nenhum profissional disponível para este serviço.";
-             option.disabled = true;
-             selectDentista.appendChild(option);
-        }
-    });
+    // A lógica de filtragem foi removida.
+    // Agora o select de dentistas é preenchido diretamente no PHP,
+    // com todos os dentistas disponíveis.
 
     // Quando o usuário escolhe uma data e dentista, busca os horários disponíveis
     inputData.addEventListener('change', function() {
@@ -333,15 +302,6 @@ $dentistasPorEspecialidade = buscarDentistasPorEspecialidade($pdo);
         // Aqui você faria uma requisição (fetch/AJAX) para o backend,
         // passando a data e o ID do dentista para buscar os horários
         // realmente disponíveis no banco de dados.
-
-        // Exemplo de requisição fetch:
-        // fetch('../backend/buscar_horarios.php?dentista_id=' + dentistaId + '&data=' + data)
-        //     .then(response => response.json())
-        //     .then(horarios => {
-        //         // Lógica para renderizar os botões com os horários recebidos
-        //     })
-        //     .catch(error => console.error('Erro ao buscar horários:', error));
-
 
         // Por enquanto, vamos usar os horários simulados:
         const horariosSimulados = ["09:00", "10:00", "11:00", "14:00", "15:00", "16:00"];
