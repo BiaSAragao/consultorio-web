@@ -3,8 +3,7 @@
 // 1. INCLUSÃO E INICIALIZAÇÃO DO PHP
 // ==========================================================
 // 1.1. Configurações e Conexão (Ajuste o caminho conforme o seu projeto)
-require_once "conexao.php"; 
-require_once "funcoes_uteis.php"; // Se você tiver funções de formatação/segurança
+require_once "conexao.php";  
 
 // Inicia a sessão se necessário (para verificar login, por exemplo)
 // session_start(); 
