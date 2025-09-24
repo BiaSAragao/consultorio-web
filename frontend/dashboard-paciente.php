@@ -1,4 +1,5 @@
 <?php
+require_once "../backend/conexao.php";
 // --- TRUQUE TEMPORÁRIO PARA VISUALIZAÇÃO DO PACIENTE ---
 session_start();
 // Simulamos um usuário logado para a página não te redirecionar
