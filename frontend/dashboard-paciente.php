@@ -1,5 +1,4 @@
 <?php
-<<<<<<< HEAD
 // --- TRUQUE TEMPORÁRIO PARA VISUALIZAÇÃO DO PACIENTE ---
 session_start();
 // Simulamos um usuário logado para a página não te redirecionar
@@ -8,20 +7,6 @@ $_SESSION['usuario_nome'] = "Paciente Teste"; // Um nome de teste para aparecer 
 $_SESSION['tipo_usuario'] = 'paciente'; // <-- MUDE AQUI para 'paciente'
 
 // --- FIM DO TRUQUE ---
-=======
-session_start();
-
-// Se o usuário não estiver logado, redireciona para o login
-if (!isset($_SESSION['usuario_id'])) {
-    header("Location: login.php");
-    exit();
-}
-
-require_once "../backend/conexao.php";
-
-$usuario_id = $_SESSION['usuario_id'];
-$usuario_nome = $_SESSION['usuario_nome'];
->>>>>>> 9d63eb1c0800ea6b27fb590c7f0b725129694b8b
 
 $titulo_pagina = 'Meu Painel - SmileUp';
 $is_dashboard = true;
@@ -117,7 +102,6 @@ function buscarServicos($pdo, $consulta_id) {
             </table>
         </div>
 
-<<<<<<< HEAD
     <section id="agendar" class="section-container">
         <h2 class="section-title">Agendar Nova Consulta</h2>
         
@@ -200,16 +184,11 @@ function buscarServicos($pdo, $consulta_id) {
                     </tr>
                 </tbody>
             </table>
-=======
-        <div style="margin-top: 15px;">
-            <a href="agendar_consulta.php" class="btn-primary">Agendar Nova Consulta</a>
->>>>>>> 9d63eb1c0800ea6b27fb590c7f0b725129694b8b
         </div>
     </section>
 
 </main>
 
-<<<<<<< HEAD
 <style>
     .botoes-navegacao {
         display: flex;
@@ -314,8 +293,6 @@ function buscarServicos($pdo, $consulta_id) {
 </script>
 
 
-=======
->>>>>>> 9d63eb1c0800ea6b27fb590c7f0b725129694b8b
 <?php
 // Fecha as tags <body> e <html>
 include 'templates/footer.php';
