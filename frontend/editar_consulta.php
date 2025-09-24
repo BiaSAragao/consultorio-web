@@ -5,20 +5,20 @@ require_once "../backend/conexao.php";
 session_start();
 
 if (!isset($_SESSION['usuario_id'])) {
-    // Redireciona para o login se não estiver logado
     header("Location: login.php");
     exit();
 }
 
 // 1. VERIFICAÇÃO INICIAL E BUSCA DA CONSULTA
 if (!isset($_GET['id'])) {
-    die("ID da consulta não informado.");
+    header("Location: dashboard-paciente.php?msg_erro=ID da consulta não informado.");
+    exit();
 }
 
 $consulta_id = intval($_GET['id']);
 $usuario_id = $_SESSION['usuario_id'];
 
-// Busca a consulta (incluindo dentista para futura validação)
+// Busca a consulta
 $stmt = $pdo->prepare("SELECT * FROM consulta WHERE consulta_id = ? AND usuario_paciente = ?");
 $stmt->execute([$consulta_id, $usuario_id]);
 $consulta = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -29,11 +29,9 @@ if (!$consulta) {
 }
 
 // 2. BUSCAR DADOS DE EDIÇÃO
+$servicos_disponiveis = $pdo->query("SELECT servico_id, nome_servico, preco, categoria_id FROM servico ORDER BY nome_servico")->fetchAll(PDO::FETCH_ASSOC);
 
-// Buscar serviços disponíveis
-$servicos_disponiveis = $pdo->query("SELECT servico_id, nome_servico, preco FROM servico ORDER BY nome_servico")->fetchAll(PDO::FETCH_ASSOC);
-
-// Buscar os serviços ATUALMENTE vinculados à consulta
+// Buscar os serviços ATUALMENTE vinculados
 $stmt_servicos_atuais = $pdo->prepare("SELECT servico_id FROM consulta_servico WHERE consulta_id = ?");
 $stmt_servicos_atuais->execute([$consulta_id]);
 $servicos_atuais = array_column($stmt_servicos_atuais->fetchAll(PDO::FETCH_ASSOC), 'servico_id');
@@ -44,20 +42,17 @@ $obs = json_decode($consulta['observacoes'], true);
 
 // 3. PROCESSAMENTO POST (SALVAR ALTERAÇÕES)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // CORREÇÃO AQUI: o campo de hora no agendamento era 'horario_selecionado', 
-    // mas como este formulário usa <input type="time" name="hora">, vamos usar 'hora'.
     $data = $_POST['data'];
-    $hora = $_POST['hora']; 
+    $hora = $_POST['hora']; // Note: Usamos 'hora' aqui, não 'horario_selecionado'
     $servicos_selecionados = $_POST['servicos'] ?? [];
     $observacoes = $_POST['observacoes'] ?? '';
     $historico = $_POST['historico'] ?? '';
     $alergias = $_POST['alergias'] ?? '';
 
-    // Lógica de cálculo (como no processa_consulta)
+    // Lógica de cálculo
     $valor_total = 0;
     if (!empty($servicos_selecionados)) {
         $ids = implode(',', array_map('intval', $servicos_selecionados));
-        // Melhoria de segurança: use prepare/execute para a soma
         $stmt_valor = $pdo->query("SELECT SUM(preco) FROM servico WHERE servico_id IN ($ids)");
         $valor_total = $stmt_valor->fetchColumn();
     }
@@ -75,7 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt_update = $pdo->prepare("UPDATE consulta SET data = ?, hora = ?, valor = ?, observacoes = ? WHERE consulta_id = ?");
         $stmt_update->execute([$data, $hora, $valor_total, $observacoes_json_final, $consulta_id]);
 
-        // Atualiza os serviços (DELETE + INSERT - Mais simples do que UPDATE)
+        // Atualiza os serviços (DELETE + INSERT)
         $pdo->prepare("DELETE FROM consulta_servico WHERE consulta_id = ?")->execute([$consulta_id]);
         $stmt_s = $pdo->prepare("INSERT INTO consulta_servico (consulta_id, servico_id) VALUES (?, ?)");
         foreach ($servicos_selecionados as $s) {
@@ -98,21 +93,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 // 4. INCLUSÃO DO LAYOUT (HEADER E FOOTER)
 $titulo_pagina = "Editar Consulta ID: " . $consulta_id;
-$is_dashboard = true; // Necessário para carregar o CSS do dashboard
+$is_dashboard = true; 
 include 'templates/header.php';
 ?>
 
 <main class="main-container">
-    <section class="container-default">
-        <h2 class="title-primary">Editar Agendamento</h2>
-        <p class="subtitle-secondary">Modifique os detalhes da sua consulta agendada para **<?= date('d/m/Y', strtotime($consulta['data'])) ?>**.</p>
+    <section id="edicao-consulta" class="section-container">
+        <h2 class="section-title">Editar Consulta Agendada</h2>
+        <p class="subtitle-secondary">ID da Consulta: #<?= $consulta_id ?> | Dentista Fixo: ID 3</p>
         
-        <form method="POST" class="form-agendamento">
+        <form method="POST" id="form-edicao">
             
-            <div class="card-form mb-4">
-                <h3 class="card-title-step">1. Data e Hora</h3>
-                <div class="form-grid">
-                    
+            <div id="passo-1" class="passo-agendamento">
+                <h3 class="subsection-title">1. Serviços, Data e Hora</h3>
+                
+                <div class="form-grid mb-4">
                     <div class="form-group">
                         <label for="data">Data da Consulta</label>
                         <input type="date" id="data" name="data" 
@@ -123,16 +118,24 @@ include 'templates/header.php';
                         <label for="hora">Hora da Consulta</label>
                         <input type="time" id="hora" name="hora" 
                                value="<?= htmlspecialchars($consulta['hora']) ?>" required>
-                        </div>
+                    </div>
                 </div>
-            </div>
 
-            <div class="card-form mb-4">
-                <h3 class="card-title-step">2. Serviços</h3>
-                <fieldset class="form-group">
-                    <legend class="detail-label mb-3">Selecione os serviços:</legend>
+                <div class="form-group">
+                    <label>Selecione os serviços (Selecione os que já estavam ou adicione novos):</label>
                     <div class="servicos-list">
-                        <?php foreach ($servicos_disponiveis as $s): ?>
+                        <?php 
+                        $categoria_atual = '';
+                        foreach ($servicos_disponiveis as $s): 
+                             // Lógica para agrupar por categoria (melhora o visual)
+                             if ($s['categoria_id'] != $categoria_atual):
+                                if ($categoria_atual != ''): ?>
+                                    </fieldset>
+                                <?php endif;
+                                $categoria_atual = $s['categoria_id']; ?>
+                                <fieldset class="fieldset-servico">
+                                    <legend><strong><?= htmlspecialchars($s['categoria_id'] ?? 'Serviço') ?></strong></legend>
+                            <?php endif; ?>
                             <div class="servico-item">
                                 <input type="checkbox" 
                                        id="servico-<?= $s['servico_id'] ?>" 
@@ -145,37 +148,59 @@ include 'templates/header.php';
                                 </label>
                             </div>
                         <?php endforeach; ?>
+                        </fieldset>
                     </div>
-                </fieldset>
+                </div>
+                
+                <div class="botoes-navegacao">
+                    <button type="button" class="btn-primary" onclick="irParaPasso(2)">Continuar</button>
+                </div>
             </div>
-            
-            <div class="card-form mb-4">
-                <h3 class="card-title-step">3. Informações Adicionais</h3>
+
+            <div id="passo-2" class="passo-agendamento" style="display: none;">
+                <h3 class="subsection-title">2. Informações Adicionais</h3>
                 
                 <div class="form-group">
                     <label for="observacoes">Observações sobre a consulta:</label>
-                    <textarea id="observacoes" name="observacoes" rows="3"><?= htmlspecialchars($obs['observacoes'] ?? $obs['obs'] ?? '') ?></textarea>
+                    <textarea id="observacoes" name="observacoes" placeholder="Observações..." rows="3"><?= htmlspecialchars($obs['observacoes'] ?? $obs['obs'] ?? '') ?></textarea>
                 </div>
 
-                <div class="form-group">
-                    <label for="historico">Histórico Médico Relevante:</label>
-                    <textarea id="historico" name="historico" rows="3"><?= htmlspecialchars($obs['historico'] ?? '') ?></textarea>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="historico">Histórico Médico Relevante:</label>
+                        <textarea id="historico" name="historico" placeholder="Condições médicas, cirurgias..." rows="3"><?= htmlspecialchars($obs['historico'] ?? '') ?></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="alergias">Alergias Conhecidas:</label>
+                        <textarea id="alergias" name="alergias" placeholder="Alergias a medicamentos, látex..." rows="3"><?= htmlspecialchars($obs['alergias'] ?? '') ?></textarea>
+                    </div>
                 </div>
 
-                <div class="form-group">
-                    <label for="alergias">Alergias Conhecidas:</label>
-                    <textarea id="alergias" name="alergias" rows="3"><?= htmlspecialchars($obs['alergias'] ?? '') ?></textarea>
+                <div class="botoes-navegacao">
+                    <button type="button" class="btn-secondary" onclick="irParaPasso(1)">Voltar</button>
+                    <button type="submit" class="btn-primary">Salvar Alterações</button>
                 </div>
-            </div>
-
-            <div class="form-actions mt-5">
-                <a href="dashboard-paciente.php" class="btn-tabela btn-secondary">Cancelar</a>
-                <button type="submit" class="btn-tabela btn-confirmar">Salvar Alterações</button>
             </div>
         </form>
 
     </section>
 </main>
+
+<script>
+    // Função para navegar entre os passos do formulário
+    function irParaPasso(numeroPasso) {
+        document.querySelectorAll('.passo-agendamento').forEach(passo => {
+            passo.style.display = 'none';
+        });
+        document.getElementById(`passo-${numeroPasso}`).style.display = 'block';
+        window.scrollTo(0, 0); // Rola para o topo da página ao mudar o passo
+    }
+    
+    // Inicializa o formulário no primeiro passo ao carregar a página
+    document.addEventListener('DOMContentLoaded', () => {
+        irParaPasso(1);
+    });
+</script>
 
 <?php 
 include 'templates/footer.php';
