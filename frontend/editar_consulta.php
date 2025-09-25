@@ -81,81 +81,104 @@ include 'templates/header.php';
 
         <form method="POST" id="form-editar">
 
-            <!-- Passo 1: Serviços -->
+             <input type="hidden" name="dentista" id="dentista" value="<?php echo $dentista_fixo_id; ?>">
+
             <div id="passo-1" class="passo-agendamento">
+                
                 <div class="form-group">
-                    <label>Selecione os serviços:</label>
+                    <label>Selecione os serviços que deseja agendar (Você pode selecionar mais de um):</label>
+                    <input type="hidden" name="servicos_validacao" id="servicos_validacao" required data-error-message="Selecione ao menos um serviço para continuar.">
+                    
                     <div class="servicos-list">
-                        <fieldset class="fieldset-servico">
-                            <legend><strong>Serviços Disponíveis</strong></legend>
-                            <?php foreach ($servicos as $s): ?>
-                                <div class="servico-item">
-                                    <input type="checkbox"
-                                           id="servico_<?= $s['servico_id'] ?>"
-                                           name="servicos[]"
-                                           value="<?= $s['servico_id'] ?>"
-                                           <?= in_array($s['servico_id'], $servicosMarcados) ? 'checked' : '' ?>>
-                                    <label for="servico_<?= $s['servico_id'] ?>">
-                                        <?= htmlspecialchars($s['nome_servico']) ?>
-                                        (R$ <?= number_format($s['preco'], 2, ',', '.') ?>)
-                                    </label>
-                                </div>
-                            <?php endforeach; ?>
-                        </fieldset>
-                    </div>
+                        <?php 
+                        $categoria_atual = '';
+                        foreach ($servicosECategorias as $servico): 
+                            if ($servico['nome_categoria'] != $categoria_atual):
+                                if ($categoria_atual != ''): ?>
+                                    </fieldset>
+                                <?php endif;
+                                $categoria_atual = $servico['nome_categoria']; ?>
+                                <fieldset class="fieldset-servico">
+                                    <legend><strong><?php echo htmlspecialchars($categoria_atual); ?></strong></legend>
+                            <?php endif; ?>
+                            <div class="servico-item">
+                                <input type="checkbox" 
+                                       id="servico_<?php echo $servico['servico_id']; ?>" 
+                                       name="servicos[]" 
+                                       value="<?php echo $servico['servico_id']; ?>" 
+                                       data-preco="<?php echo $servico['preco']; ?>">
+                                <label for="servico_<?php echo $servico['servico_id']; ?>">
+                                    <?php echo htmlspecialchars($servico['nome_servico']); ?> 
+                                    (R$ <?php echo number_format($servico['preco'], 2, ',', '.'); ?>)
+                                </label>
+                            </div>
+                        <?php endforeach; ?>
+                        </fieldset> </div>
+                    <p style="margin-top: 15px;">**O valor final será a soma dos serviços selecionados.**</p>
+                </div>
+                
+                <div class="form-group">
+                    <label for="dentista_info">Profissional Escolhido:</label>
+                    <p style="padding: 10px; border: 1px solid #ccc; background-color: #f8f9fa; border-radius: 4px;">
+                        **Dr(a). Fixo (ID <?php echo $dentista_fixo_id; ?>)**
+                    </p>
                 </div>
 
                 <div class="botoes-navegacao">
-                    <button type="button" class="btn-primary" onclick="irParaPasso(2)">Continuar</button>
+                    <button type="button" class="btn-primary" onclick="validarEPularPasso(1, 2)">Continuar</button>
                 </div>
             </div>
 
-            <!-- Passo 2: Data e Hora -->
-            <div id="passo-2" class="passo-agendamento" style="display:none;">
+            <div id="passo-2" class="passo-agendamento" style="display: none;">
                 <h3 class="subsection-title">Escolha a Data e Horário</h3>
                 <div class="form-grid">
                     <div class="form-group">
-                        <label for="data">Data</label>
-                        <input type="date" id="data" name="data" value="<?= htmlspecialchars($consulta['data']) ?>" required>
+                        <label for="data">Data Desejada</label>
+                        <input type="date" id="data" name="data" required>
                     </div>
                     <div class="form-group">
-                        <label for="hora">Hora</label>
-                        <input type="time" id="hora" name="hora" value="<?= htmlspecialchars($consulta['hora']) ?>" required>
+                        <label>Horários Disponíveis</label>
+                        <div class="horarios-disponiveis" id="lista-horarios">
+                            <p>Selecione uma data para ver os horários disponíveis.</p>
+                        </div>
+                        <input type="hidden" id="horario_selecionado" name="horario_selecionado" required data-error-message="Selecione um horário.">
                     </div>
                 </div>
 
                 <div class="botoes-navegacao">
                     <button type="button" class="btn-secondary" onclick="irParaPasso(1)">Voltar</button>
-                    <button type="button" class="btn-primary" onclick="irParaPasso(3)">Continuar</button>
+                    <button type="button" class="btn-primary" onclick="validarEPularPasso(2, 3)">Continuar</button>
                 </div>
             </div>
 
-            <!-- Passo 3: Observações -->
-            <div id="passo-3" class="passo-agendamento" style="display:none;">
-                <h3 class="subsection-title">Informações Adicionais</h3>
+            <div id="passo-3" class="passo-agendamento" style="display: none;">
+                <h3 class="subsection-title">Informações Adicionais (Opcional)</h3>
                 <div class="form-group">
-                    <label for="observacoes">Observações</label>
-                    <textarea id="observacoes" name="observacoes"><?= htmlspecialchars($obs['obs'] ?? '') ?></textarea>
-                </div>
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label for="historico">Histórico</label>
-                        <textarea id="historico" name="historico"><?= htmlspecialchars($obs['historico'] ?? '') ?></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label for="alergias">Alergias</label>
-                        <textarea id="alergias" name="alergias"><?= htmlspecialchars($obs['alergias'] ?? '') ?></textarea>
-                    </div>
+                    <label for="observacoes">Observações sobre a Consulta:</label>
+                    <textarea id="observacoes" name="observacoes" placeholder="Ex: Preferência por anestesia local, dúvidas sobre o procedimento."></textarea>
                 </div>
 
+                <h3 class="subsection-title" style="margin-top: 2rem;">Seu Histórico de Saúde (Opcional)</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="historico">Histórico Odontológico/Médico:</label>
+                        <textarea id="historico" name="historico" placeholder="Informe condições médicas relevantes, cirurgias recentes, ou tratamentos odontológicos anteriores."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="alergias">Alergias Conhecidas:</label>
+                        <textarea id="alergias" name="alergias" placeholder="Informe alergias a medicamentos, látex, etc."></textarea>
+                    </div>
+                </div>
+                
                 <div class="botoes-navegacao">
                     <button type="button" class="btn-secondary" onclick="irParaPasso(2)">Voltar</button>
-                    <button type="submit" class="btn-primary">Salvar Alterações</button>
+                    <button type="submit" class="btn-primary">Salvar alterações</button>
                 </div>
             </div>
 
         </form>
     </section>
+
 </main>
 
 <style>
@@ -165,6 +188,50 @@ include 'templates/header.php';
         gap: 1rem;
         margin-top: 2rem;
     }
+
+    .horarios-disponiveis {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        max-height: 200px;
+        overflow-y: auto;
+    }
+
+    .horario-item {
+        background-color: #f0f0f0;
+        border: 1px solid #ccc;
+        padding: 8px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.2s, box-shadow 0.2s;
+    }
+
+    .horario-item:hover {
+        background-color: #e0e0e0;
+    }
+
+    .horario-item.selected {
+        background-color: #007bff; /* Cor primária */
+        color: white;
+        border-color: #007bff;
+        box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    @media (min-width: 768px) {
+        .form-grid {
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+
     .servicos-list {
         border: 1px solid #ccc;
         padding: 15px;
@@ -172,20 +239,23 @@ include 'templates/header.php';
         max-height: 300px;
         overflow-y: auto;
     }
+
+    .fieldset-servico {
+        border: none;
+        padding: 0;
+        margin-bottom: 15px;
+    }
+
     .fieldset-servico legend {
         font-size: 1.1em;
         margin-bottom: 5px;
         color: #007bff;
     }
-    .servico-item { margin-bottom: 5px; }
-    .form-grid {
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 20px;
+
+    .servico-item {
+        margin-bottom: 5px;
     }
-    @media (min-width: 768px) {
-        .form-grid { grid-template-columns: 1fr 1fr; }
-    }
+
     .subsection-title {
         border-bottom: 1px solid #eee;
         padding-bottom: 5px;
@@ -195,12 +265,139 @@ include 'templates/header.php';
 </style>
 
 <script>
-    function irParaPasso(numero) {
-        document.querySelectorAll('.passo-agendamento').forEach(p => p.style.display = 'none');
-        document.getElementById('passo-' + numero).style.display = 'block';
-        window.scrollTo(0,0);
+    // --- LÓGICA PARA O FORMULÁRIO DE AGENDAMENTO EM PASSOS ---
+
+    // O ID do dentista agora é pego do campo hidden
+    const inputDentistaId = document.getElementById('dentista');
+    
+    const inputData = document.getElementById('data');
+    const divHorarios = document.getElementById('lista-horarios');
+    const inputHorarioSelecionado = document.getElementById('horario_selecionado');
+    const checkboxesServicos = document.querySelectorAll('input[name="servicos[]"]');
+    const inputServicosValidacao = document.getElementById('servicos_validacao');
+
+    // Função para navegar entre os passos do formulário
+    function irParaPasso(numeroPasso) {
+        document.querySelectorAll('.passo-agendamento').forEach(passo => {
+            passo.style.display = 'none';
+        });
+        document.getElementById(`passo-${numeroPasso}`).style.display = 'block';
+        window.scrollTo(0, 0); // Rola para o topo da página ao mudar o passo
     }
-    document.addEventListener('DOMContentLoaded', () => irParaPasso(1));
+
+    // Função para validar o passo atual antes de avançar
+    function validarEPularPasso(passoAtual, proximoPasso) {
+        let valido = true;
+        
+        if (passoAtual === 1) {
+            // Validação de serviços: deve haver pelo menos um selecionado
+            const servicosSelecionados = Array.from(checkboxesServicos).some(checkbox => checkbox.checked);
+            if (!servicosSelecionados) {
+                alert(inputServicosValidacao.dataset.errorMessage);
+                valido = false;
+            } else {
+                inputServicosValidacao.value = 'selecionado'; // Preenche o campo hidden para validação do browser/backend
+            }
+
+            // O dentista está fixo e validado automaticamente, mas mantemos o 'valido = true'
+
+        } else if (passoAtual === 2) {
+            // Validação de data e horário
+            if (!inputData.value || !inputHorarioSelecionado.value) {
+                 alert('Selecione uma data e um horário disponível.');
+                 valido = false;
+            }
+        }
+        
+        // Se todas as validações do passo atual passarem, avança
+        if (valido) {
+            irParaPasso(proximoPasso);
+        }
+    }
+
+
+    // --- LÓGICA DE HORÁRIOS (SIMULAÇÃO) ---
+    function buscarHorarios(data, dentistaId) {
+        // Limpa seleções anteriores
+        inputHorarioSelecionado.value = '';
+
+        // *** PONTO DE INTEGRAÇÃO COM BACKEND: Usar fetch/AJAX aqui! ***
+        // Exemplo: fetch('backend/api_horarios.php?data=' + data + '&dentista_id=' + dentistaId)
+        
+        // Simulação (remova isso ao integrar com o backend real):
+        // Se a data for amanhã (apenas para testar diferentes resultados)
+        const hoje = new Date().toISOString().split('T')[0];
+        const amanha = new Date(new Date().getTime() + 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+        let horariosSimulados = [];
+
+        if (data === hoje) {
+            horariosSimulados = ["15:00", "16:00", "17:00"]; // Menos horários
+        } else if (data === amanha) {
+            horariosSimulados = ["08:00", "09:30", "11:00", "14:00", "15:30"];
+        } else {
+             // Horários padrão simulados
+            horariosSimulados = ["09:00", "10:00", "11:00", "14:00", "15:00", "16:00"];
+        }
+
+        // Renderiza os botões de horário
+        divHorarios.innerHTML = ''; // Limpa a lista
+        if (horariosSimulados.length === 0) {
+             divHorarios.innerHTML = '<p>Nenhum horário disponível para esta data.</p>';
+        } else {
+            horariosSimulados.forEach(horario => {
+                const btnHorario = document.createElement('button');
+                btnHorario.type = 'button';
+                btnHorario.className = 'horario-item';
+                btnHorario.textContent = horario;
+                btnHorario.dataset.horario = horario;
+
+                btnHorario.addEventListener('click', function() {
+                    document.querySelectorAll('.horario-item.selected').forEach(btn => {
+                        btn.classList.remove('selected');
+                    });
+                    this.classList.add('selected');
+                    inputHorarioSelecionado.value = this.dataset.horario;
+                });
+
+                divHorarios.appendChild(btnHorario);
+            });
+        }
+    }
+
+
+    // Event Listener para Data (o dentista é fixo)
+    inputData.addEventListener('change', function() {
+        // Garante que a data não é passada ou muito distante (simples validação front-end)
+        const dataSelecionada = new Date(this.value);
+        const hoje = new Date();
+        hoje.setHours(0, 0, 0, 0); // Zera a hora para comparação
+        
+        if (dataSelecionada < hoje) {
+             alert('Você não pode agendar para uma data passada.');
+             this.value = ''; // Limpa o campo
+             divHorarios.innerHTML = '<p>Selecione uma data válida.</p>';
+             return;
+        }
+
+        const data = this.value;
+        // O dentista_id é fixo, mas precisamos passá-lo para a função de busca (simulada ou real)
+        const dentistaId = inputDentistaId.value; 
+        
+        if (data && dentistaId) {
+            buscarHorarios(data, dentistaId);
+        } else {
+            divHorarios.innerHTML = '<p>Selecione uma data para ver os horários.</p>';
+        }
+    });
+    
+    // Inicializa o formulário no primeiro passo
+    document.addEventListener('DOMContentLoaded', () => {
+        irParaPasso(1);
+    });
+
 </script>
 
-<?php include 'templates/footer.php'; ?>
+<?php
+// Fecha as tags <body> e <html>
+include 'templates/footer.php';
+?>
