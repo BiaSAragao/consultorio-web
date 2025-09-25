@@ -71,6 +71,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $obs = json_decode($consulta['observacoes'], true);
 $titulo_pagina = "Editar Consulta - SmileUp";
 $is_dashboard = false;
+
+$dentista_fixo_id = 3; 
+
+// A busca por todos os dentistas (função buscarTodosDentistas) FOI REMOVIDA.
+
+// 1. Função para buscar serviços e categorias (MANTIDA)
+function buscarServicosECategorias($pdo) {
+    $stmt = $pdo->query("
+        SELECT 
+            s.servico_id, 
+            s.nome_servico,
+            s.descricao,
+            s.preco,
+            c.nome AS nome_categoria,
+            c.categoria_id
+        FROM 
+            Servico s
+        JOIN 
+            Categoria c ON s.categoria_id = c.categoria_id
+        ORDER BY
+            c.nome, s.nome_servico
+    ");
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+// 2. OBTENDO DADOS DO BANCO PARA O FORMULÁRIO
+$servicosECategorias = buscarServicosECategorias($pdo);
+
 include 'templates/header.php';
 ?>
 
