@@ -1,179 +1,153 @@
 <?php
-// Carrega o arquivo de conexão com o banco de dados
 require_once "../backend/conexao.php";
 session_start();
 
-// Garante que só entra quem está logado E é paciente
-if (!isset($_SESSION["usuario_id"])) {
-    header("Location: login.php");
-    exit();
+if (!isset($_SESSION['usuario_id'])) {
+    die("Você precisa estar logado para editar uma consulta.");
 }
 
-$usuario_id = $_SESSION['usuario_id'];
-$usuario_nome = $_SESSION['usuario_nome'];
-$titulo_pagina = 'Editar Consulta - SmileUp';
-$is_dashboard = false;
-
-// O ID da consulta a editar
 if (!isset($_GET['id'])) {
-    die("Consulta não especificada.");
+    die("ID da consulta não informado.");
 }
+
 $consulta_id = intval($_GET['id']);
+$usuario_id = $_SESSION['usuario_id'];
 
-// O ID do dentista fixo (conforme sua solicitação)
-$dentista_fixo_id = 3; 
-
-// 1. Função para buscar serviços e categorias
-function buscarServicosECategorias($pdo) {
-    $stmt = $pdo->query("
-        SELECT 
-            s.servico_id, 
-            s.nome_servico,
-            s.descricao,
-            s.preco,
-            c.nome AS nome_categoria,
-            c.categoria_id
-        FROM 
-            Servico s
-        JOIN 
-            Categoria c ON s.categoria_id = c.categoria_id
-        ORDER BY
-            c.nome, s.nome_servico
-    ");
-    return $stmt->fetchAll(PDO::FETCH_ASSOC);
-}
-
-// 2. Buscar dados atuais da consulta
-$stmt = $pdo->prepare("
-    SELECT c.consulta_id, c.data, c.horario, c.observacoes, c.historico, c.alergias
-    FROM Consulta c
-    WHERE c.consulta_id = :id AND c.paciente_id = :usuario_id
-");
-$stmt->execute([':id' => $consulta_id, ':usuario_id' => $usuario_id]);
+// Busca a consulta
+$stmt = $pdo->prepare("SELECT * FROM consulta WHERE consulta_id = ? AND usuario_paciente = ?");
+$stmt->execute([$consulta_id, $usuario_id]);
 $consulta = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$consulta) {
-    die("Consulta não encontrada ou não pertence a este usuário.");
+    die("Consulta não encontrada ou não pertence a você.");
 }
 
-// Buscar serviços já vinculados à consulta
-$stmtServicos = $pdo->prepare("
-    SELECT servico_id 
-    FROM Consulta_Servico 
-    WHERE consulta_id = :id
-");
-$stmtServicos->execute([':id' => $consulta_id]);
-$servicosSelecionados = $stmtServicos->fetchAll(PDO::FETCH_COLUMN);
+// Buscar serviços disponíveis
+$servicos = $pdo->query("SELECT servico_id, nome_servico, preco FROM servico ORDER BY nome_servico")->fetchAll(PDO::FETCH_ASSOC);
 
-// 3. Obter todos os serviços/categorias
-$servicosECategorias = buscarServicosECategorias($pdo);
+// Serviços já vinculados à consulta
+$servicosMarcados = array_column(
+    $pdo->query("SELECT servico_id FROM consulta_servico WHERE consulta_id = $consulta_id")->fetchAll(PDO::FETCH_ASSOC),
+    'servico_id'
+);
 
-// Carrega cabeçalho e menu
+// Se enviou POST, atualiza
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $data = $_POST['data'];
+    $hora = $_POST['hora'];
+    $servicos_selecionados = $_POST['servicos'] ?? [];
+    $observacoes = $_POST['observacoes'] ?? '';
+    $historico = $_POST['historico'] ?? '';
+    $alergias = $_POST['alergias'] ?? '';
+
+    $valor_total = 0;
+    if (!empty($servicos_selecionados)) {
+        $ids = implode(',', array_map('intval', $servicos_selecionados));
+        $valor_total = $pdo->query("SELECT SUM(preco) FROM servico WHERE servico_id IN ($ids)")->fetchColumn();
+    }
+
+    $observacoes_json = json_encode([
+        'obs' => $observacoes,
+        'historico' => $historico,
+        'alergias' => $alergias
+    ]);
+
+    // Atualizar consulta
+    $stmt_update = $pdo->prepare("UPDATE consulta SET data = ?, hora = ?, valor = ?, observacoes = ? WHERE consulta_id = ?");
+    $stmt_update->execute([$data, $hora, $valor_total, $observacoes_json, $consulta_id]);
+
+    // Atualiza os serviços
+    $pdo->prepare("DELETE FROM consulta_servico WHERE consulta_id = ?")->execute([$consulta_id]);
+    $stmt_s = $pdo->prepare("INSERT INTO consulta_servico (consulta_id, servico_id) VALUES (?, ?)");
+    foreach ($servicos_selecionados as $s) {
+        $stmt_s->execute([$consulta_id, $s]);
+    }
+
+    header("Location: dashboard-paciente.php?msg=Consulta atualizada com sucesso!");
+    exit;
+}
+
+// Decodifica observações
+$obs = json_decode($consulta['observacoes'], true);
+$titulo_pagina = "Editar Consulta - SmileUp";
+$is_dashboard = false;
 include 'templates/header.php';
 ?>
 
 <main class="main-container">
 
-    <section id="agendamento" class="section-container">
-        <h2 class="section-title">Editar Consulta #<?php echo $consulta_id; ?></h2>
-        
-        <?php if (isset($_GET['msg'])): ?>
-            <div style="background: #d4edda; color: #155724; padding: 10px; margin: 15px 0; border: 1px solid #c3e6cb; border-radius: 5px;">
-                <?php echo htmlspecialchars($_GET['msg']); ?>
-            </div>
-        <?php endif; ?>
+    <section id="editar-consulta" class="section-container">
+        <h2 class="section-title">Editar Consulta</h2>
 
-        <form action="../backend/processa_consulta.php?acao=editar&id=<?php echo $consulta_id; ?>" method="POST" id="form-agendamento">
-            
-            <input type="hidden" name="dentista" id="dentista" value="<?php echo $dentista_fixo_id; ?>">
+        <form method="POST" id="form-editar">
 
+            <!-- Passo 1: Serviços -->
             <div id="passo-1" class="passo-agendamento">
-                
                 <div class="form-group">
-                    <label>Serviços da Consulta:</label>
-                    <input type="hidden" name="servicos_validacao" id="servicos_validacao" required data-error-message="Selecione ao menos um serviço para continuar.">
-                    
+                    <label>Selecione os serviços:</label>
                     <div class="servicos-list">
-                        <?php 
-                        $categoria_atual = '';
-                        foreach ($servicosECategorias as $servico): 
-                            if ($servico['nome_categoria'] != $categoria_atual):
-                                if ($categoria_atual != ''): ?>
-                                    </fieldset>
-                                <?php endif;
-                                $categoria_atual = $servico['nome_categoria']; ?>
-                                <fieldset class="fieldset-servico">
-                                    <legend><strong><?php echo htmlspecialchars($categoria_atual); ?></strong></legend>
-                            <?php endif; ?>
-                            <div class="servico-item">
-                                <input type="checkbox" 
-                                       id="servico_<?php echo $servico['servico_id']; ?>" 
-                                       name="servicos[]" 
-                                       value="<?php echo $servico['servico_id']; ?>" 
-                                       data-preco="<?php echo $servico['preco']; ?>"
-                                       <?php echo in_array($servico['servico_id'], $servicosSelecionados) ? 'checked' : ''; ?>>
-                                <label for="servico_<?php echo $servico['servico_id']; ?>">
-                                    <?php echo htmlspecialchars($servico['nome_servico']); ?> 
-                                    (R$ <?php echo number_format($servico['preco'], 2, ',', '.'); ?>)
-                                </label>
-                            </div>
-                        <?php endforeach; ?>
-                        </fieldset> </div>
-                </div>
-                
-                <div class="form-group">
-                    <label for="dentista_info">Profissional:</label>
-                    <p style="padding: 10px; border: 1px solid #ccc; background-color: #f8f9fa; border-radius: 4px;">
-                        Dr(a). Fixo (ID <?php echo $dentista_fixo_id; ?>)
-                    </p>
+                        <fieldset class="fieldset-servico">
+                            <legend><strong>Serviços Disponíveis</strong></legend>
+                            <?php foreach ($servicos as $s): ?>
+                                <div class="servico-item">
+                                    <input type="checkbox"
+                                           id="servico_<?= $s['servico_id'] ?>"
+                                           name="servicos[]"
+                                           value="<?= $s['servico_id'] ?>"
+                                           <?= in_array($s['servico_id'], $servicosMarcados) ? 'checked' : '' ?>>
+                                    <label for="servico_<?= $s['servico_id'] ?>">
+                                        <?= htmlspecialchars($s['nome_servico']) ?>
+                                        (R$ <?= number_format($s['preco'], 2, ',', '.') ?>)
+                                    </label>
+                                </div>
+                            <?php endforeach; ?>
+                        </fieldset>
+                    </div>
                 </div>
 
                 <div class="botoes-navegacao">
-                    <button type="button" class="btn-primary" onclick="validarEPularPasso(1, 2)">Continuar</button>
+                    <button type="button" class="btn-primary" onclick="irParaPasso(2)">Continuar</button>
                 </div>
             </div>
 
-            <div id="passo-2" class="passo-agendamento" style="display: none;">
+            <!-- Passo 2: Data e Hora -->
+            <div id="passo-2" class="passo-agendamento" style="display:none;">
                 <h3 class="subsection-title">Escolha a Data e Horário</h3>
                 <div class="form-grid">
                     <div class="form-group">
                         <label for="data">Data</label>
-                        <input type="date" id="data" name="data" required value="<?php echo htmlspecialchars($consulta['data']); ?>">
+                        <input type="date" id="data" name="data" value="<?= htmlspecialchars($consulta['data']) ?>" required>
                     </div>
                     <div class="form-group">
-                        <label>Horários Disponíveis</label>
-                        <div class="horarios-disponiveis" id="lista-horarios">
-                            <p>Selecione uma data para ver os horários disponíveis.</p>
-                        </div>
-                        <input type="hidden" id="horario_selecionado" name="horario_selecionado" required value="<?php echo htmlspecialchars($consulta['horario']); ?>" data-error-message="Selecione um horário.">
+                        <label for="hora">Hora</label>
+                        <input type="time" id="hora" name="hora" value="<?= htmlspecialchars($consulta['hora']) ?>" required>
                     </div>
                 </div>
 
                 <div class="botoes-navegacao">
                     <button type="button" class="btn-secondary" onclick="irParaPasso(1)">Voltar</button>
-                    <button type="button" class="btn-primary" onclick="validarEPularPasso(2, 3)">Continuar</button>
+                    <button type="button" class="btn-primary" onclick="irParaPasso(3)">Continuar</button>
                 </div>
             </div>
 
-            <div id="passo-3" class="passo-agendamento" style="display: none;">
+            <!-- Passo 3: Observações -->
+            <div id="passo-3" class="passo-agendamento" style="display:none;">
                 <h3 class="subsection-title">Informações Adicionais</h3>
                 <div class="form-group">
-                    <label for="observacoes">Observações:</label>
-                    <textarea id="observacoes" name="observacoes"><?php echo htmlspecialchars($consulta['observacoes']); ?></textarea>
+                    <label for="observacoes">Observações</label>
+                    <textarea id="observacoes" name="observacoes"><?= htmlspecialchars($obs['obs'] ?? '') ?></textarea>
                 </div>
-
-                <h3 class="subsection-title" style="margin-top: 2rem;">Histórico de Saúde</h3>
                 <div class="form-grid">
                     <div class="form-group">
-                        <label for="historico">Histórico Odontológico/Médico:</label>
-                        <textarea id="historico" name="historico"><?php echo htmlspecialchars($consulta['historico']); ?></textarea>
+                        <label for="historico">Histórico</label>
+                        <textarea id="historico" name="historico"><?= htmlspecialchars($obs['historico'] ?? '') ?></textarea>
                     </div>
                     <div class="form-group">
-                        <label for="alergias">Alergias Conhecidas:</label>
-                        <textarea id="alergias" name="alergias"><?php echo htmlspecialchars($consulta['alergias']); ?></textarea>
+                        <label for="alergias">Alergias</label>
+                        <textarea id="alergias" name="alergias"><?= htmlspecialchars($obs['alergias'] ?? '') ?></textarea>
                     </div>
                 </div>
-                
+
                 <div class="botoes-navegacao">
                     <button type="button" class="btn-secondary" onclick="irParaPasso(2)">Voltar</button>
                     <button type="submit" class="btn-primary">Salvar Alterações</button>
@@ -182,10 +156,51 @@ include 'templates/header.php';
 
         </form>
     </section>
-
 </main>
 
-<?php
-// Fecha as tags <body> e <html>
-include 'templates/footer.php';
-?>
+<style>
+    .botoes-navegacao {
+        display: flex;
+        justify-content: flex-end;
+        gap: 1rem;
+        margin-top: 2rem;
+    }
+    .servicos-list {
+        border: 1px solid #ccc;
+        padding: 15px;
+        border-radius: 5px;
+        max-height: 300px;
+        overflow-y: auto;
+    }
+    .fieldset-servico legend {
+        font-size: 1.1em;
+        margin-bottom: 5px;
+        color: #007bff;
+    }
+    .servico-item { margin-bottom: 5px; }
+    .form-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    @media (min-width: 768px) {
+        .form-grid { grid-template-columns: 1fr 1fr; }
+    }
+    .subsection-title {
+        border-bottom: 1px solid #eee;
+        padding-bottom: 5px;
+        margin-bottom: 15px;
+        color: #333;
+    }
+</style>
+
+<script>
+    function irParaPasso(numero) {
+        document.querySelectorAll('.passo-agendamento').forEach(p => p.style.display = 'none');
+        document.getElementById('passo-' + numero).style.display = 'block';
+        window.scrollTo(0,0);
+    }
+    document.addEventListener('DOMContentLoaded', () => irParaPasso(1));
+</script>
+
+<?php include 'templates/footer.php'; ?>
