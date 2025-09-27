@@ -47,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Login - Dentista</title>
-        <link rel="stylesheet" href="logind.css" />
+        <link rel="stylesheet" href="'../frontend/css/logind.css" />
     </head>
     <body>
         <main class="main-container">

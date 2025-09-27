@@ -104,17 +104,39 @@ if (empty($dados_paciente)) {
     <section id="laudos" class="section-container">
         <h3 class="section-title">Laudos e Documentos</h3>
         <table class="tabela-consultas">
-             <thead><tr><th>Nome do Arquivo</th><th>Data de Upload</th><th>Ação</th></tr></thead>
-             <tbody>
-                <?php foreach ($lista_laudos as $laudo): ?>
-                <tr>
-                    <td><?php echo htmlspecialchars($laudo['nome_arquivo']); ?></td>
-                    <td><?php echo date('d/m/Y', strtotime($laudo['data_upload'])); ?></td>
-                    <td><a href="#" class="btn-tabela btn-secondary">Baixar</a></td>
-                </tr>
-                <?php endforeach; ?>
-             </tbody>
+              <thead><tr><th>Nome do Arquivo</th><th>Data de Upload</th><th>Ação</th></tr></thead>
+              <tbody>
+                <?php
+                // --- LÓGICA REAL PARA BUSCAR OS LAUDOS DO BANCO ---
+                /*
+                 * Substitua a tabela 'laudos' e as colunas pelos nomes corretos do seu banco.
+                */
+                // $stmt_laudos = $pdo->prepare("SELECT id_laudo, nome_arquivo_original, data_upload FROM laudos WHERE id_paciente = ? ORDER BY data_upload DESC");
+                // $stmt_laudos->execute([$id_paciente]);
+                // $lista_laudos = $stmt_laudos->fetchAll(PDO::FETCH_ASSOC);
+
+                // USANDO DADOS FICTÍCIOS POR ENQUANTO (COMENTE A LÓGICA ACIMA)
+                $lista_laudos = [
+                    ['id_laudo' => 1, 'nome_arquivo_original' => 'Raio-X_Panoramico_2025.pdf', 'data_upload' => '2025-03-15'],
+                    ['id_laudo' => 2, 'nome_arquivo_original' => 'Exame_de_Sangue.jpg', 'data_upload' => '2025-04-01'],
+                ];
+                
+                if (empty($lista_laudos)): ?>
+                    <tr><td colspan="3">Nenhum documento encontrado para este paciente.</td></tr>
+                <?php else: ?>
+                    <?php foreach ($lista_laudos as $laudo): ?>
+                    <tr>
+                        <td><?php echo htmlspecialchars($laudo['nome_arquivo_original']); ?></td>
+                        <td><?php echo date('d/m/Y', strtotime($laudo['data_upload'])); ?></td>
+                        
+                        <td><a href="../backend/download_laudo.php?id=<?php echo $laudo['id_laudo']; ?>" class="btn-tabela btn-secondary">Baixar</a></td>
+
+                    </tr>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+              </tbody>
         </table>
+        
         <h4 style="margin-top: 2rem;">Enviar Novo Documento</h4>
         <form action="../backend/upload_laudo.php" method="POST" enctype="multipart/form-data">
             <input type="hidden" name="id_paciente" value="<?php echo $id_paciente; ?>">
