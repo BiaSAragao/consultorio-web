@@ -221,7 +221,14 @@ include '../frontend/templates/header.php';
                         <td>R$ <?php echo number_format($item['preco'] * $item['quantidade'], 2, ',', '.'); ?></td>
                         <td>
                             <a href="../backend/editar_item.php?id=<?php echo $item['id']; ?>" class="btn-tabela btn-editar">Editar</a>
-                            <a href="../backend/remover_item.php?id=<?php echo $item['id']; ?>" class="btn-tabela btn-cancelar" onclick="return confirm('Tem certeza que deseja remover este item do seu inventário?');">Remover</a>
+                            <a href="../backend/remover_qtde_item.php?id=<?php echo $item['id']; ?>" class="btn-tabela btn-cancelar">Remover Qtd.</a>
+                            <a 
+                                href="../backend/remover_item_total.php?id=<?php echo $item['id']; ?>" 
+                                class="btn-tabela btn-secundario-danger" 
+                                onclick="return confirm('ATENÇÃO: Você deseja remover TODOS os registros e a quantidade restante deste item do seu inventário? Esta ação é irreversível.');"
+                            >
+                                Remover Total
+                            </a>
                         </td>
                     </tr>
                     <?php endforeach; ?>
