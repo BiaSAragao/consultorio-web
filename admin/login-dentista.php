@@ -11,15 +11,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     require '../backend/conexao.php'; 
 
     $email = $_POST['email'];
-    $senha = $_POST['senha'];
+    $senha = $_POST['senha']; // Senha em texto puro, conforme inserido no banco
 
     try {
-        // 1. Verifica se o usuário existe
+        // 1. Verifica se o usuário existe e OBTÉM a senha salva (HASH OU TEXTO PURO)
+        // Alteração: Selecionamos a coluna 'senha' para comparação
         $stmt = $pdo->prepare("SELECT usuario_id, nome, senha FROM usuario WHERE email = ?");
         $stmt->execute([$email]);
         $usuario = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        if ($usuario && password_verify($senha, $usuario['senha'])) {
+        // ** ALTERAÇÃO PRINCIPAL AQUI: COMPARANDO TEXTO PURO **
+        // Se o usuário existe E a senha digitada é IGUAL à senha salva no banco:
+        if ($usuario && $senha === $usuario['senha']) { 
             $usuario_id = $usuario['usuario_id'];
 
             // 2. Verifica se este usuário é um dentista
@@ -29,8 +32,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
             if ($dentista) {
                 // ✅ É dentista, faz login
-                $_SESSION['dentista_id'] = $usuario['usuario_id'];
-                $_SESSION['dentista_nome'] = $usuario['nome'];
+                // ATENÇÃO: Os nomes das variáveis de sessão devem ser 'usuario_id' e 'tipo_usuario' 
+                // para funcionar com o dashboard-dentista.php, que você me mostrou anteriormente.
+                $_SESSION['usuario_id'] = $usuario['usuario_id'];
+                $_SESSION['usuario_nome'] = $usuario['nome'];
+                $_SESSION['tipo_usuario'] = 'dentista'; // Necessário para o controle de acesso no dashboard
 
                 header("Location: dashboard-dentista.php");
                 exit();
@@ -38,11 +44,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $erro = "Este usuário não é um dentista.";
             }
         } else {
+            // A falha ocorre se o usuário não existir OU se a senha não for uma correspondência exata de TEXTO.
             $erro = "E-mail ou senha inválidos.";
         }
 
     } catch (PDOException $e) {
+        // Se a conexão ainda falhar (problema no conexao.php), a exceção é capturada.
         $erro = "Falha de comunicação com o sistema.";
+        // Dica de Debug: Altere temporariamente para $erro = "Erro: " . $e->getMessage();
     }
 }
 ?>
