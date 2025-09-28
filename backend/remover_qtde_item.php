@@ -44,7 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         // 2. Comando UPDATE (Subtração)
         $sql_update = "
-            UPDATE Estoque_Dentista 
+            UPDATE estoque_dentista 
             SET qtde = :qtde 
             WHERE usuario_id = :did AND item_id = :iid
         ";
@@ -57,7 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Se a nova quantidade for zero, podemos remover o registro para manter o banco limpo (opcional)
         if ($nova_quantidade === 0) {
-             $sql_delete = "DELETE FROM Estoque_Dentista WHERE usuario_id = :did AND item_id = :iid";
+             $sql_delete = "DELETE FROM estoque_dentista WHERE usuario_id = :did AND item_id = :iid";
              $pdo->prepare($sql_delete)->execute([':did' => $dentista_id, ':iid' => $item_id]);
              $_SESSION['mensagem_sucesso'] = "Todo o estoque do item foi removido com sucesso.";
         } else {
@@ -81,8 +81,8 @@ $sql_item = "
     SELECT 
         ed.qtde, 
         e.nome_item
-    FROM Estoque_Dentista ed
-    JOIN Estoque e ON ed.item_id = e.item_id
+    FROM estoque_dentista ed
+    JOIN estoque e ON ed.item_id = e.item_id
     WHERE ed.usuario_id = :did AND ed.item_id = :iid
 ";
 $stmt_item = $pdo->prepare($sql_item);
@@ -126,7 +126,7 @@ if (!$item_atual) {
             <p><strong>Estoque Atual:</strong> <?php echo $item_atual['qtde']; ?> unidades</p>
         </div>
 
-        <form action="remover_quantidade_item.php?id=<?php echo $item_id; ?>" method="POST">
+        <form action="?id=<?php echo $item_id; ?>" method="POST">
             <input type="hidden" name="estoque_atual" value="<?php echo $item_atual['qtde']; ?>">
             
             <div class="form-group">
