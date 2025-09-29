@@ -20,29 +20,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $nome = $_POST['nome'] ?? '';
     $telefone = $_POST['telefone'] ?? '';
     $cro = $_POST['cro'] ?? ''; 
-    $senha_atual = $_POST['senha_atual'] ?? '';
-    $nova_senha = $_POST['nova_senha'] ?? '';
+    $senha_atual = trim($_POST['senha_atual'] ?? ''); // Garante que não há espaços
+    $nova_senha = trim($_POST['nova_senha'] ?? '');
 
     try {
         // A. Processamento da Mudança de Senha
         if (!empty($nova_senha)) {
             
-            // 1. Busca o HASH atual da senha (correto: busca hash)
+            // 1. Busca a senha ATUAL como TEXTO PURO do banco
             $stmt_hash = $pdo->prepare("SELECT senha FROM Usuario WHERE usuario_id = :id");
             $stmt_hash->execute([':id' => $dentista_id]);
             $usuario = $stmt_hash->fetch(PDO::FETCH_ASSOC);
 
-            // 2. Verifica a Senha Atual (lida como texto PURO do formulário)
-            if (!$usuario || !password_verify($senha_atual, $usuario['senha'])) {
+            // 2. Compara a Senha Atual (Pura) com a senha salva no banco (Pura)
+            if (!$usuario || $senha_atual !== $usuario['senha']) { // COMPARAÇÃO DE TEXTO PURO
                 $mensagem_erro = "Senha atual incorreta. A senha não foi alterada.";
             } else if (strlen($nova_senha) < 6) { 
                 $mensagem_erro = "A nova senha deve ter pelo menos 6 caracteres.";
             } else {
-                // 3. Cria o novo HASH e faz o UPDATE (correto: salva hash)
+                // 3. Cria o novo HASH e faz o UPDATE (Salva criptografada)
                 $novo_hash = password_hash($nova_senha, PASSWORD_DEFAULT);
                 $stmt_update_senha = $pdo->prepare("UPDATE Usuario SET senha = :hash WHERE usuario_id = :id");
                 $stmt_update_senha->execute([':hash' => $novo_hash, ':id' => $dentista_id]);
                 $mensagem_sucesso = "Sua senha foi atualizada com sucesso!";
+                
+                // IMPORTANTE: Se a atualização for bem-sucedida, você deve **remover esta lógica insegura**
+                // e fazer com que o login a partir de agora use `password_verify()` no novo hash.
             }
         }
 
