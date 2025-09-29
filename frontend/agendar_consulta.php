@@ -41,6 +41,80 @@ function buscarServicosECategorias($pdo) {
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
+function buscarHorariosHTML($pdo, $dentista_id, $data_consulta) {
+    
+    $timestamp = strtotime($data_consulta);
+    $dia_semana_en = strtolower(date('l', $timestamp)); 
+    
+    $dias_semana = [
+        'monday' => 'segunda', 'tuesday' => 'terca', 'wednesday' => 'quarta',
+        'thursday' => 'quinta', 'friday' => 'sexta',
+    ];
+
+    $dia_semana_db = $dias_semana[$dia_semana_en] ?? null;
+
+    if ($dia_semana_db === null) {
+        return '<p>O profissional não trabalha neste dia da semana.</p>';
+    }
+
+    try {
+        // CORREÇÃO FINAL DA QUERY: 'consulta' em minúsculo.
+        $sql = "
+            SELECT 
+                dd.horario
+            FROM 
+                disponibilidade_dentista dd
+            LEFT JOIN 
+                consulta c ON dd.usuario_id = c.usuario_dentista 
+                            AND dd.horario = c.hora             
+                            AND c.data = :data_consulta
+            WHERE 
+                dd.usuario_id = :dentista_id 
+                AND dd.dia_semana = :dia_semana_db
+                AND c.consulta_id IS NULL
+            ORDER BY
+                dd.horario ASC
+        ";
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindParam(':dentista_id', $dentista_id, PDO::PARAM_INT);
+        $stmt->bindParam(':data_consulta', $data_consulta);
+        $stmt->bindParam(':dia_semana_db', $dia_semana_db);
+        $stmt->execute();
+        
+        $horarios_disponiveis = $stmt->fetchAll(PDO::FETCH_COLUMN);
+        $html_output = '';
+
+        if (empty($horarios_disponiveis)) {
+            $html_output = '<p>Nenhum horário disponível encontrado para esta data.</p>';
+        } else {
+            // Retorna o HTML dos botões de horário
+            foreach ($horarios_disponiveis as $horario) {
+                $hora_formatada = substr($horario, 0, 5);
+                $html_output .= "<div class='horario-item' data-horario='{$horario}'>{$hora_formatada}</div>";
+            }
+        }
+        return $html_output;
+
+    } catch (PDOException $e) {
+        // Retorna erro no HTML para visualização
+        return '<p style="color: red;">Erro ao executar busca no banco de dados. Tente novamente.</p>';
+    }
+}
+// ----------------------------------------------------------------------------------
+
+// NOVO CÓDIGO DE TRATAMENTO DE URL (COLOQUE ANTES DO HTML, APÓS AS FUNÇÕES PHP)
+
+$horarios_html = '<p>Selecione uma data para ver os horários disponíveis.</p>';
+// Captura os valores da URL (GET) ou de outros campos
+$data_selecionada = $_GET['data'] ?? '';
+$dentista_selecionado = $_GET['dentista_id'] ?? '';
+
+// Se data e dentista_id estiverem na URL, chama a função de busca
+if (!empty($data_selecionada) && !empty($dentista_selecionado)) {
+    $horarios_html = buscarHorariosHTML($pdo, $dentista_selecionado, $data_selecionada);
+}
+
 // 2. OBTENDO DADOS DO BANCO PARA O FORMULÁRIO
 $servicosECategorias = buscarServicosECategorias($pdo);
 
@@ -116,16 +190,19 @@ include 'templates/header.php';
                 <h3 class="subsection-title">Escolha a Data e Horário</h3>
                 <div class="form-grid">
                     <div class="form-group">
-                        <label for="data">Data Desejada</label>
-                        <input type="date" id="data" name="data" required>
+                        <label for="data">Data Desejada:</label>
+                        <input type="date" id="data" name="data" class="form-control" required 
+                            value="<?php echo htmlspecialchars($data_selecionada); ?>">
                     </div>
+
                     <div class="form-group">
-                        <label>Horários Disponíveis</label>
-                        <div class="horarios-disponiveis" id="lista-horarios">
-                            <p>Selecione uma data para ver os horários disponíveis.</p>
+                        <label>Horários Disponíveis:</label>
+                        <div id="lista-horarios" class="horarios-grid">
+                            <?php echo $horarios_html; ?>
                         </div>
-                        <input type="hidden" id="horario_selecionado" name="horario_selecionado" required data-error-message="Selecione um horário.">
                     </div>
+
+                    <input type="hidden" id="horario_selecionado" name="horario" required>
                 </div>
 
                 <div class="botoes-navegacao">
