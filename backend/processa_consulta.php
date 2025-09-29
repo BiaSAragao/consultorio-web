@@ -17,7 +17,7 @@ try {
     // 1. COLETA E NORMALIZAÇÃO DOS DADOS
     $data = $_POST["data"];
     // CORREÇÃO AQUI: Usando o nome correto do campo do formulário
-    $hora = $_POST["horario_selecionado"]; 
+    $hora = $_POST["horario"] ?? null; 
     $servicos = $_POST["servicos"] ?? [];
     
     // Dados adicionais (usaremos nos observacoes JSON)
