@@ -1,24 +1,57 @@
 // --- LÓGICA PARA O FORMULÁRIO DE AGENDAMENTO EM PASSOS ---
 
-// Espera o documento carregar completamente para garantir que todos os elementos HTML existam
 document.addEventListener('DOMContentLoaded', () => {
     
-    // Pega os elementos do formulário pelos seus IDs
     const inputDentistaId = document.getElementById('dentista');
     const inputData = document.getElementById('data');
     const divHorarios = document.getElementById('lista-horarios');
     const inputHorarioSelecionado = document.getElementById('horario_selecionado');
-    const checkboxesServicos = document.querySelectorAll('input[name="servicos[]"]');
     const inputServicosValidacao = document.getElementById('servicos_validacao');
 
     // Inicializa o formulário no primeiro passo
     irParaPasso(1);
 
-    // Adiciona o Event Listener para o campo de data
+    // --- EVENTO DE SELEÇÃO DE SERVIÇO ---
+    const checkboxesServicos = document.querySelectorAll('input[name="servicos[]"]');
+    checkboxesServicos.forEach(checkbox => {
+        checkbox.addEventListener('change', async function() {
+            // Se desmarcou, verifica se ainda há algum serviço marcado da mesma categoria
+            const categoriaId = this.dataset.categoria;
+            const servicosSelecionados = Array.from(checkboxesServicos).filter(cb => cb.checked && cb.dataset.categoria === categoriaId);
+
+            if (servicosSelecionados.length === 0) {
+                // Nenhum serviço dessa categoria marcado, limpa o dentista
+                inputDentistaId.value = '';
+                document.getElementById('dentista_info').innerText = '**Selecione um serviço para ver o dentista responsável**';
+                divHorarios.innerHTML = '<p>Selecione uma data para ver os horários.</p>';
+                inputHorarioSelecionado.value = '';
+                return;
+            }
+
+            // Pega a categoria do primeiro serviço marcado para buscar o dentista
+            const categoriaBusca = servicosSelecionados[0].dataset.categoria;
+
+            try {
+                const resp = await fetch(`../backend/get_dentista.php?categoria_id=${categoriaBusca}`);
+                const dentista = await resp.json();
+                if (dentista && dentista.usuario_id) {
+                    document.getElementById('dentista_info').innerText = dentista.nome + ' (CRO: ' + dentista.cro + ')';
+                    inputDentistaId.value = dentista.usuario_id;
+                    // Se já houver data selecionada, busca os horários desse dentista
+                    if (inputData.value) {
+                        buscarHorarios(inputData.value, dentista.usuario_id);
+                    }
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        });
+    });
+
+    // --- EVENTO DE SELEÇÃO DE DATA ---
     if(inputData) {
         inputData.addEventListener('change', function() {
-            // Garante que a data não é passada
-            const dataSelecionada = new Date(this.value + "T00:00:00"); // Adiciona T00:00:00 para evitar problemas de fuso horário
+            const dataSelecionada = new Date(this.value + "T00:00:00");
             const hoje = new Date();
             hoje.setHours(0, 0, 0, 0);
 
@@ -26,6 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 alert('Você não pode agendar para uma data passada.');
                 this.value = '';
                 divHorarios.innerHTML = '<p>Selecione uma data válida.</p>';
+                inputHorarioSelecionado.value = '';
                 return;
             }
 
@@ -35,14 +69,13 @@ document.addEventListener('DOMContentLoaded', () => {
             if (data && dentistaId) {
                 buscarHorarios(data, dentistaId);
             } else {
-                divHorarios.innerHTML = '<p>Selecione uma data para ver os horários.</p>';
+                divHorarios.innerHTML = '<p>Selecione um serviço para ver o dentista e horários.</p>';
             }
         });
     }
 });
 
-
-// Função para navegar entre os passos do formulário
+// --- FUNÇÕES DE NAVEGAÇÃO DE PASSOS ---
 function irParaPasso(numeroPasso) {
     document.querySelectorAll('.passo-agendamento').forEach(passo => {
         passo.style.display = 'none';
@@ -51,23 +84,21 @@ function irParaPasso(numeroPasso) {
     if(passoAtual) {
         passoAtual.style.display = 'block';
     }
-    window.scrollTo(0, 0); // Rola para o topo da página
+    window.scrollTo(0, 0);
 }
 
-// Função para validar o passo atual antes de avançar
 function validarEPularPasso(passoAtual, proximoPasso) {
     let valido = true;
     
     if (passoAtual === 1) {
         const checkboxesServicos = document.querySelectorAll('input[name="servicos[]"]');
-        const inputServicosValidacao = document.getElementById('servicos_validacao');
-        const servicosSelecionados = Array.from(checkboxesServicos).some(checkbox => checkbox.checked);
+        const servicosSelecionados = Array.from(checkboxesServicos).some(cb => cb.checked);
 
         if (!servicosSelecionados) {
-            alert(inputServicosValidacao.dataset.errorMessage);
+            alert(document.getElementById('servicos_validacao').dataset.errorMessage);
             valido = false;
         } else {
-            inputServicosValidacao.value = 'selecionado';
+            document.getElementById('servicos_validacao').value = 'selecionado';
         }
     } else if (passoAtual === 2) {
         const inputData = document.getElementById('data');
@@ -83,32 +114,24 @@ function validarEPularPasso(passoAtual, proximoPasso) {
     }
 }
 
-// --- LÓGICA DE HORÁRIOS (SIMULAÇÃO) ---
-function buscarHorarios(data, dentistaId) {
+// --- FUNÇÃO DE BUSCA DE HORÁRIOS DISPONÍVEIS ---
+async function buscarHorarios(data, dentistaId) {
     const divHorarios = document.getElementById('lista-horarios');
     const inputHorarioSelecionado = document.getElementById('horario_selecionado');
     inputHorarioSelecionado.value = '';
+    divHorarios.innerHTML = '<p>Carregando horários...</p>';
 
-    // *** PONTO DE INTEGRAÇÃO COM BACKEND: Usar fetch/AJAX aqui! ***
-    
-    // Simulação (remova isso ao integrar com o backend real):
-    const hoje = new Date().toISOString().split('T')[0];
-    const amanha = new Date(new Date().getTime() + 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-    let horariosSimulados = [];
+    try {
+        const resp = await fetch(`../backend/get_horarios.php?dentista_id=${dentistaId}&data=${data}`);
+        const horarios = await resp.json();
 
-    if (data === hoje) {
-        horariosSimulados = ["15:00", "16:00", "17:00"];
-    } else if (data === amanha) {
-        horariosSimulados = ["08:00", "09:30", "11:00", "14:00", "15:30"];
-    } else {
-        horariosSimulados = ["09:00", "10:00", "11:00", "14:00", "15:00", "16:00"];
-    }
+        divHorarios.innerHTML = '';
+        if (!horarios || horarios.length === 0) {
+            divHorarios.innerHTML = '<p>Nenhum horário disponível para esta data.</p>';
+            return;
+        }
 
-    divHorarios.innerHTML = '';
-    if (horariosSimulados.length === 0) {
-        divHorarios.innerHTML = '<p>Nenhum horário disponível para esta data.</p>';
-    } else {
-        horariosSimulados.forEach(horario => {
+        horarios.forEach(horario => {
             const btnHorario = document.createElement('button');
             btnHorario.type = 'button';
             btnHorario.className = 'horario-item';
@@ -116,14 +139,15 @@ function buscarHorarios(data, dentistaId) {
             btnHorario.dataset.horario = horario;
 
             btnHorario.addEventListener('click', function() {
-                document.querySelectorAll('.horario-item.selected').forEach(btn => {
-                    btn.classList.remove('selected');
-                });
+                document.querySelectorAll('.horario-item.selected').forEach(btn => btn.classList.remove('selected'));
                 this.classList.add('selected');
                 inputHorarioSelecionado.value = this.dataset.horario;
             });
 
             divHorarios.appendChild(btnHorario);
         });
+    } catch (e) {
+        console.error(e);
+        divHorarios.innerHTML = '<p>Erro ao carregar horários.</p>';
     }
 }
