@@ -1,3 +1,5 @@
+// Arquivo: backend/buscar_horarios.php
+
 <?php
 // Define o cabeçalho para retornar JSON
 header('Content-Type: application/json');
@@ -5,7 +7,7 @@ header('Content-Type: application/json');
 // Carrega o arquivo de conexão com o banco de dados
 require_once "conexao.php";
 
-// 1. Validar e capturar dados de entrada
+// 1. Validar e capturar dados de entrada (via POST, conforme o JS)
 if (!isset($_POST['dentista_id']) || !isset($_POST['data'])) {
     http_response_code(400);
     echo json_encode(['error' => 'Dados insuficientes (Dentista ID e Data são obrigatórios).']);
@@ -37,7 +39,6 @@ try {
         'wednesday' => 'quarta',
         'thursday' => 'quinta',
         'friday' => 'sexta',
-        // Sábado e Domingo podem ser incluídos se o seu sistema permitir agendamento nesses dias
     ];
 
     $dia_semana_db = $dias_semana[$dia_semana_en] ?? null;
@@ -48,11 +49,7 @@ try {
         exit();
     }
 
-
     // 3. Consultar horários disponíveis:
-    // Seleciona todos os horários na 'disponibilidade_dentista'
-    // E verifica, através de um LEFT JOIN com 'consulta', se aquele horário
-    // já foi agendado para o mesmo dentista e na data específica.
     $sql = "
         SELECT 
             dd.horario
@@ -65,7 +62,7 @@ try {
         WHERE 
             dd.usuario_id = :dentista_id 
             AND dd.dia_semana = :dia_semana_db
-            -- A condição é que a consulta 'c' seja NULA, ou seja, não há consulta agendada para este horário/data
+            -- A condição é que a consulta 'c' seja NULA (ou seja, horário não ocupado)
             AND c.consulta_id IS NULL
         ORDER BY
             dd.horario ASC
@@ -87,7 +84,6 @@ try {
 
 } catch (PDOException $e) {
     http_response_code(500);
-    // Em produção, não mostre $e->getMessage() ao usuário final.
     echo json_encode(['error' => 'Erro interno do servidor ao buscar horários: ' . $e->getMessage()]);
 } catch (Exception $e) {
     http_response_code(500);

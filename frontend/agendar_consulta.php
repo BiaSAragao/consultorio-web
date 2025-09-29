@@ -14,12 +14,10 @@ $usuario_nome = $_SESSION['usuario_nome'];
 $titulo_pagina = 'Agendar Consulta - SmileUp';
 $is_dashboard = false;
 
-// O ID do dentista fixo (conforme sua solicitação) FOI REMOVIDO.
-// A busca por todos os dentistas (função buscarTodosDentistas) FOI REMOVIDA.
+// O ID do dentista fixo FOI REMOVIDO E SERÁ ESCOLHIDO VIA JS/AJAX
 
-// 1. Função para buscar serviços, categorias E O DENTISTA ASSOCIADO À CATEGORIA
+// 1. Função para buscar serviços e categorias (MANTIDA SIMPLES)
 function buscarServicosECategorias($pdo) {
-    // Adicionamos o JOIN com a tabela 'dentista' (que tem 'usuario_id' do dentista) e 'Categoria_Dentista' para buscar o dentista
     $stmt = $pdo->query("
         SELECT 
             s.servico_id, 
@@ -27,26 +25,14 @@ function buscarServicosECategorias($pdo) {
             s.descricao,
             s.preco,
             c.nome AS nome_categoria,
-            c.categoria_id,
-            d.usuario_id AS dentista_id,
-            u.nome AS nome_dentista
+            c.categoria_id
         FROM 
             Servico s
         JOIN 
             Categoria c ON s.categoria_id = c.categoria_id
-        JOIN
-            Categoria_Dentista cd ON c.categoria_id = cd.categoria_id
-        JOIN
-            Dentista d ON cd.dentista_id = d.usuario_id
-        JOIN
-            Usuario u ON d.usuario_id = u.usuario_id
         ORDER BY
-            c.nome, s.nome_servico, u.nome
+            c.nome, s.nome_servico
     ");
-    // Retornamos todos os serviços. Note que se uma categoria tiver dois dentistas, o serviço aparecerá duas vezes,
-    // o que é um comportamento que o JS terá que gerenciar (ex: agrupar por serviço e dentista) ou o backend
-    // precisará ser ajustado para pegar apenas UM dentista principal por categoria/serviço.
-    // Para simplificar, assumimos que o JS fará o trabalho de mostrar as opções.
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
@@ -70,29 +56,18 @@ include 'templates/header.php';
 
         <form action="../backend/processa_consulta.php" method="POST" id="form-agendamento">
             
-            <input type="hidden" name="dentista" id="dentista_selecionado" required data-error-message="Selecione um dentista para continuar.">
+            <input type="hidden" name="dentista" id="dentista_selecionado" value="" required data-error-message="O dentista deve ser selecionado após a escolha do serviço.">
 
             <div id="passo-1" class="passo-agendamento">
                 
                 <div class="form-group">
-                    <label>Selecione os serviços que deseja agendar (Você pode selecionar mais de um):</label>
+                    <label>Selecione os serviços que deseja agendar (Você pode selecionar mais de um, mas devem ser da mesma categoria):</label>
                     <input type="hidden" name="servicos_validacao" id="servicos_validacao" required data-error-message="Selecione ao menos um serviço para continuar.">
                     
                     <div class="servicos-list">
                         <?php 
                         $categoria_atual = '';
-                        // Usamos um array auxiliar para garantir que cada serviço/dentista seja único na lista de checkbox
-                        $servicos_unicos = [];
                         foreach ($servicosECategorias as $servico): 
-                            // Criando uma chave única que inclui o dentista, pois agora ele é a variável
-                            $chave_servico_dentista = $servico['servico_id'] . '_' . $servico['dentista_id'];
-                            
-                            // Ignora se já listamos esse par serviço/dentista
-                            if (isset($servicos_unicos[$chave_servico_dentista])) {
-                                continue;
-                            }
-                            $servicos_unicos[$chave_servico_dentista] = true;
-
                             if ($servico['nome_categoria'] != $categoria_atual):
                                 if ($categoria_atual != ''): ?>
                                     </fieldset>
@@ -103,14 +78,15 @@ include 'templates/header.php';
                             <?php endif; ?>
                             <div class="servico-item">
                                 <input type="checkbox" 
-                                       id="servico_<?php echo $servico['servico_id']; ?>_dentista_<?php echo $servico['dentista_id']; ?>" 
+                                       id="servico_<?php echo $servico['servico_id']; ?>" 
                                        name="servicos[]" 
-                                       value="<?php echo $servico['servico_id'] . '|' . $servico['dentista_id']; ?>" 
+                                       value="<?php echo $servico['servico_id']; ?>" 
                                        data-preco="<?php echo $servico['preco']; ?>"
-                                       data-dentista-id="<?php echo $servico['dentista_id']; ?>">
-                                <label for="servico_<?php echo $servico['servico_id']; ?>_dentista_<?php echo $servico['dentista_id']; ?>">
+                                       data-categoria-id="<?php echo $servico['categoria_id']; ?>" 
+                                       data-categoria-nome="<?php echo htmlspecialchars($servico['nome_categoria']); ?>">
+                                <label for="servico_<?php echo $servico['servico_id']; ?>">
                                     <?php echo htmlspecialchars($servico['nome_servico']); ?> 
-                                    (Com Dr(a). <?php echo htmlspecialchars($servico['nome_dentista']); ?> - R$ <?php echo number_format($servico['preco'], 2, ',', '.'); ?>)
+                                    (R$ <?php echo number_format($servico['preco'], 2, ',', '.'); ?>)
                                 </label>
                             </div>
                         <?php endforeach; ?>
@@ -119,9 +95,9 @@ include 'templates/header.php';
                 </div>
                 
                 <div class="form-group">
-                    <label for="dentista_info">Profissional(is) Escolhido(s):</label>
-                    <p id="info-dentista" style="padding: 10px; border: 1px solid #ccc; background-color: #f8f9fa; border-radius: 4px;">
-                        **Selecione um serviço para ver o profissional associado.**
+                    <label for="dentista_info">Profissional Escolhido:</label>
+                    <p id="dentista_info" style="padding: 10px; border: 1px solid #ccc; background-color: #f8f9fa; border-radius: 4px;">
+                        **Selecione um serviço para ver o dentista responsável.**
                     </p>
                 </div>
 
@@ -140,7 +116,7 @@ include 'templates/header.php';
                     <div class="form-group">
                         <label>Horários Disponíveis</label>
                         <div class="horarios-disponiveis" id="lista-horarios">
-                            <p>Selecione uma **data** e um **dentista/serviço** para ver os horários disponíveis.</p>
+                            <p>Selecione uma data para ver os horários disponíveis.</p>
                         </div>
                         <input type="hidden" id="horario_selecionado" name="horario_selecionado" required data-error-message="Selecione um horário.">
                     </div>
@@ -183,8 +159,7 @@ include 'templates/header.php';
 </main>
 
 <style>
-/* ... O CSS permanece inalterado ... */
-/* Estilos para a navegação */
+/* O bloco <style> foi mantido igual ao que você forneceu */
     .botoes-navegacao {
         display: flex;
         justify-content: flex-end;
@@ -192,7 +167,6 @@ include 'templates/header.php';
         margin-top: 2rem;
     }
 
-    /* Estilos para a lista de horários */
     .horarios-disponiveis {
         display: flex;
         flex-wrap: wrap;
@@ -224,7 +198,6 @@ include 'templates/header.php';
         box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
     }
 
-    /* Estilos de layout da grade */
     .form-grid {
         display: grid;
         grid-template-columns: 1fr;
@@ -237,7 +210,6 @@ include 'templates/header.php';
         }
     }
 
-    /* Estilos para a lista de serviços */
     .servicos-list {
         border: 1px solid #ccc;
         padding: 15px;
