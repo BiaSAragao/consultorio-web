@@ -27,18 +27,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // A. Processamento da Mudança de Senha
         if (!empty($nova_senha)) {
             
-            // 1. Busca o HASH atual da senha
+            // 1. Busca o HASH atual da senha (correto: busca hash)
             $stmt_hash = $pdo->prepare("SELECT senha FROM Usuario WHERE usuario_id = :id");
             $stmt_hash->execute([':id' => $dentista_id]);
             $usuario = $stmt_hash->fetch(PDO::FETCH_ASSOC);
 
+            // 2. Verifica a Senha Atual (lida como texto PURO do formulário)
             if (!$usuario || !password_verify($senha_atual, $usuario['senha'])) {
                 $mensagem_erro = "Senha atual incorreta. A senha não foi alterada.";
-                // Interrompe o processo para que o usuário insira a senha atual correta
             } else if (strlen($nova_senha) < 6) { 
                 $mensagem_erro = "A nova senha deve ter pelo menos 6 caracteres.";
             } else {
-                // 2. Cria o novo HASH da senha e faz o UPDATE
+                // 3. Cria o novo HASH e faz o UPDATE (correto: salva hash)
                 $novo_hash = password_hash($nova_senha, PASSWORD_DEFAULT);
                 $stmt_update_senha = $pdo->prepare("UPDATE Usuario SET senha = :hash WHERE usuario_id = :id");
                 $stmt_update_senha->execute([':hash' => $novo_hash, ':id' => $dentista_id]);
@@ -46,10 +46,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
-        // B. Processamento dos Dados Pessoais (Nome e Telefone na tabela Usuario)
+        // B. Processamento dos Dados Pessoais (Nome e Telefone/tel)
         if (empty($mensagem_erro)) { // Só prossegue se não houve erro de senha
             
-            $stmt_update_usuario = $pdo->prepare("UPDATE Usuario SET nome = :nome, telefone = :tel WHERE usuario_id = :id");
+            // CORRIGIDO: Usando a coluna 'tel' do banco de dados no UPDATE
+            $stmt_update_usuario = $pdo->prepare("UPDATE Usuario SET nome = :nome, tel = :tel WHERE usuario_id = :id");
             $stmt_update_usuario->execute([':nome' => $nome, ':tel' => $telefone, ':id' => $dentista_id]);
 
             // C. Processamento do CRO (na tabela Dentista)
@@ -58,14 +59,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $mensagem_sucesso = $mensagem_sucesso ? $mensagem_sucesso . " e seus dados pessoais também." : "Seus dados pessoais foram atualizados com sucesso.";
             
-            // Atualiza o nome na sessão caso ele tenha sido mudado
+            // Atualiza o nome na sessão
             $_SESSION['usuario_nome'] = $nome;
 
         }
 
     } catch (PDOException $e) {
-        $mensagem_erro = "Erro ao salvar: Falha na comunicação com o banco de dados.";
-        // Em debug, use: $mensagem_erro = "Erro: " . $e->getMessage();
+        $mensagem_erro = "Erro ao salvar: Falha na comunicação com o banco de dados. " . $e->getMessage();
     }
 }
 
@@ -74,10 +74,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 try {
     // 2. Busca dos dados atuais do usuário (tabela Usuario)
+    // CORRIGIDO: Buscando a coluna 'tel' e apelidando como 'telefone'
     $sql_usuario = "SELECT nome, email, tel AS telefone FROM Usuario WHERE usuario_id = :id";
     $stmt_usuario = $pdo->prepare($sql_usuario);
     $stmt_usuario->execute([':id' => $dentista_id]);
     $dados_usuario = $stmt_usuario->fetch(PDO::FETCH_ASSOC);
+
+    // CORREÇÃO ANTI-FATAL-ERROR: Garante que é um array, mesmo se não encontrar
+    if ($dados_usuario === false) {
+        $dados_usuario = ['nome' => '', 'email' => '', 'telefone' => ''];
+        $mensagem_erro = $mensagem_erro ?: "Erro: Dados principais do usuário não encontrados.";
+    }
 
     // 3. Busca do CRO (tabela Dentista)
     $sql_dentista = "SELECT cro FROM Dentista WHERE usuario_id = :id";
@@ -85,11 +92,16 @@ try {
     $stmt_dentista->execute([':id' => $dentista_id]);
     $dados_dentista = $stmt_dentista->fetch(PDO::FETCH_ASSOC);
 
-    // Combina os dados
+    // CORREÇÃO ANTI-FATAL-ERROR: Garante que é um array, mesmo se não encontrar
+    if ($dados_dentista === false) {
+        $dados_dentista = ['cro' => ''];
+    }
+
+    // Combina os dados (array_merge agora está seguro)
     $perfil = array_merge($dados_usuario, $dados_dentista);
 
 } catch (PDOException $e) {
-    $mensagem_erro = "Erro ao carregar dados do perfil.";
+    $mensagem_erro = "Erro ao carregar dados do perfil. " . $e->getMessage();
     $perfil = ['nome' => '', 'email' => '', 'telefone' => '', 'cro' => ''];
 }
 
