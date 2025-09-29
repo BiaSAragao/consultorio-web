@@ -1,102 +1,137 @@
 <?php
-// --- TRUQUE TEMPORÁRIO PARA VISUALIZAÇÃO ---
+// admin/ficha-paciente.php
+
 session_start();
-// Simulamos um DENTISTA logado para a página funcionar
-if (!isset($_SESSION['usuario_id'])) {
-    $_SESSION['usuario_id'] = 101; 
-    $_SESSION['usuario_nome'] = "Dr. Carlos Moura";
-    $_SESSION['tipo_usuario'] = 'dentista';
+// Inclui o arquivo de conexão PDO
+require '../backend/conexao.php'; 
+
+// 1. VERIFICAÇÃO DE ACESSO (Obriga o login)
+if (!isset($_SESSION['usuario_id']) || $_SESSION['tipo_usuario'] !== 'dentista') {
+    // Redireciona para a página de login se o dentista não estiver logado
+    header('Location: login-dentista.php'); 
+    exit;
 }
-// --- FIM DO TRUQUE ---
 
 $titulo_pagina = 'Ficha do Paciente - SmileUp';
-$is_dashboard = true; // Para carregar o CSS do painel
+$is_dashboard = true; 
+$erro_db = null;
 
-include '../frontend/templates/header.php';
-
-// --- LÓGICA DO BACKEND (Busca no Banco de Dados) ---
-
-// 1. Pega o ID da URL e valida para segurança
+// 2. Pega o ID da URL e valida
 $id_paciente = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
 
 if (!$id_paciente) {
-    // Se não houver um ID válido, mostra um erro e para a execução
     echo "<main class='main-container'><p class='section-container'>Erro: ID do paciente não fornecido ou inválido.</p></main>";
     include '../frontend/templates/footer.php';
-    exit(); // Para o script aqui
+    exit(); 
 }
 
-/*
- * ===================================================================
- * GUIA PARA A DUPLA DO BANCO DE DADOS
- * ===================================================================
- * A query principal agora deve buscar também os novos campos:
- * $stmt = $pdo->prepare("SELECT nome, telefone, email, cpf, plano_saude, data_nascimento FROM pacientes WHERE id = ?");
- * $stmt->execute([$id_paciente]);
- * $dados_paciente = $stmt->fetch(PDO::FETCH_ASSOC);
- * */
+// ===================================================================
+// LÓGICA DO BANCO DE DADOS
+// ===================================================================
 
-// 3. DADOS FICTÍCIOS - ATUALIZADOS COM OS NOVOS CAMPOS
-$dados_paciente = [
-    'id' => $id_paciente, 
-    'nome' => 'Maria Oliveira da Silva', 
-    'telefone' => '(75) 99999-8888', 
-    'email' => 'maria.oliveira@email.com',
-    'cpf' => '123.456.789-00',
-    'plano_saude' => 'OdontoPlus',
-    'data_nascimento' => '1990-05-15' // Formato AAAA-MM-DD para calcular a idade
-];
+try {
+    // A. DADOS PESSOAIS DO PACIENTE
+    // Buscamos dados da tabela Usuario (nome, email, tel) e Paciente (cpf, plano, dt_nasc)
+    $sql_dados_paciente = "
+        SELECT 
+            u.nome, u.telefone, u.email, 
+            p.cpf, p.plano_saude, p.data_nascimento
+        FROM Usuario u
+        JOIN Paciente p ON u.usuario_id = p.usuario_id
+        WHERE u.usuario_id = :id_paciente
+    ";
+    $stmt_paciente = $pdo->prepare($sql_dados_paciente);
+    $stmt_paciente->execute([':id_paciente' => $id_paciente]);
+    $dados_paciente = $stmt_paciente->fetch(PDO::FETCH_ASSOC);
 
-// Lógica para calcular a idade a partir da data de nascimento
+    // Se o paciente não foi encontrado no banco, $dados_paciente estaria vazio
+    if (!$dados_paciente) {
+        echo "<main class='main-container'><p class='section-container'>Paciente com ID $id_paciente não encontrado ou não é um paciente.</p></main>";
+        include '../frontend/templates/footer.php';
+        exit();
+    }
+    
+    // B. HISTÓRICO DE CONSULTAS
+    $sql_historico = "
+        SELECT 
+            c.data, 
+            c.status,
+            s.nome_servico AS procedimento
+        FROM Consulta c
+        JOIN Consulta_Servico cs ON c.consulta_id = cs.consulta_id
+        JOIN Servico s ON cs.servico_id = s.servico_id
+        WHERE c.usuario_paciente = :id_paciente
+        ORDER BY c.data DESC
+    ";
+    $stmt_historico = $pdo->prepare($sql_historico);
+    $stmt_historico->execute([':id_paciente' => $id_paciente]);
+    $historico_consultas = $stmt_historico->fetchAll(PDO::FETCH_ASSOC);
+
+    // C. LAUDOS E DOCUMENTOS
+    $sql_laudos = "
+        SELECT 
+            documento_id AS id_laudo, 
+            nome_arquivo_original, 
+            data_upload
+        FROM Documento -- Substitua 'Documento' pelo nome real da sua tabela de laudos/arquivos
+        WHERE usuario_paciente = :id_paciente
+        ORDER BY data_upload DESC
+    ";
+    $stmt_laudos = $pdo->prepare($sql_laudos);
+    $stmt_laudos->execute([':id_paciente' => $id_paciente]);
+    $lista_laudos = $stmt_laudos->fetchAll(PDO::FETCH_ASSOC);
+
+
+} catch (PDOException $e) {
+    $erro_db = "Erro de comunicação com o sistema ao carregar a ficha. Por favor, tente novamente.";
+}
+
+
+// 3. Lógica para calcular a idade
 $nascimento = new DateTime($dados_paciente['data_nascimento']);
 $hoje = new DateTime();
 $idade = $nascimento->diff($hoje)->y;
-
-
-// (Dados fictícios para histórico de consultas e laudos)
-$historico_consultas = [
-    ['data' => '2025-09-09', 'procedimento' => 'Limpeza e Prevenção', 'status' => 'Realizado'],
-    ['data' => '2025-03-15', 'procedimento' => 'Avaliação Inicial', 'status' => 'Realizado'],
-];
-$lista_laudos = [
-    ['id' => 1, 'nome_arquivo' => 'Raio-X_Panoramico_2025.pdf', 'data_upload' => '2025-03-15'],
-];
-// MUDANÇA: O histórico financeiro fictício foi removido.
-
-// Se o paciente não foi encontrado no banco, $dados_paciente estaria vazio
-if (empty($dados_paciente)) {
-     echo "<main class='main-container'><p class='section-container'>Paciente com ID $id_paciente não encontrado.</p></main>";
-    include '../frontend/templates/footer.php';
-    exit();
-}
 // --- FIM DA LÓGICA DO BACKEND ---
+
+include '../frontend/templates/header.php';
 ?>
 
 <main class="main-container">
 
-  <section id="dados-pessoais" class="section-container">
-    <h2 class="section-title">Ficha Completa de - <?php echo htmlspecialchars($dados_paciente['nome']); ?></h2>
-    <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
-        <p><strong>Telefone:</strong> <?php echo htmlspecialchars($dados_paciente['telefone']); ?></p>
-        <p><strong>Email:</strong> <?php echo htmlspecialchars($dados_paciente['email']); ?></p>
-        <p><strong>CPF:</strong> <?php echo htmlspecialchars($dados_paciente['cpf']); ?></p>
-        <p><strong>Plano de Saúde:</strong> <?php echo htmlspecialchars($dados_paciente['plano_saude']); ?></p>
-         <p><strong>Idade:</strong> <?php echo $idade; ?> anos</p>
-    </div>
-</section>
+    <?php if (isset($erro_db)): ?>
+        <section class="section-container">
+            <p style="color: red; padding: 10px; border: 1px solid red; background-color: #fee2e2; border-radius: 4px;"><?php echo htmlspecialchars($erro_db); ?></p>
+        </section>
+    <?php endif; ?>
+
+    <section id="dados-pessoais" class="section-container">
+        <h2 class="section-title">Ficha Completa de - <?php echo htmlspecialchars($dados_paciente['nome']); ?></h2>
+        <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+            <p><strong>Telefone:</strong> <?php echo htmlspecialchars($dados_paciente['telefone']); ?></p>
+            <p><strong>Email:</strong> <?php echo htmlspecialchars($dados_paciente['email']); ?></p>
+            <p><strong>CPF:</strong> <?php echo htmlspecialchars($dados_paciente['cpf']); ?></p>
+            <p><strong>Plano de Saúde:</strong> <?php echo htmlspecialchars($dados_paciente['plano_saude'] ?? 'N/A'); ?></p>
+            <p><strong>Data Nasc.:</strong> <?php echo date('d/m/Y', strtotime($dados_paciente['data_nascimento'])); ?></p>
+            <p><strong>Idade:</strong> <?php echo $idade; ?> anos</p>
+        </div>
+    </section>
 
     <section id="historico-consultas" class="section-container">
         <h3 class="section-title">Histórico de Consultas</h3>
         <table class="tabela-consultas">
             <thead><tr><th>Data</th><th>Procedimento</th><th>Status</th></tr></thead>
             <tbody>
-                <?php foreach ($historico_consultas as $consulta): ?>
-                <tr>
-                    <td><?php echo date('d/m/Y', strtotime($consulta['data'])); ?></td>
-                    <td><?php echo htmlspecialchars($consulta['procedimento']); ?></td>
-                    <td><?php echo htmlspecialchars(ucfirst($consulta['status'])); ?></td>
-                </tr>
-                <?php endforeach; ?>
+                <?php if (empty($historico_consultas)): ?>
+                    <tr><td colspan="3" style="text-align: center;">Nenhuma consulta registrada.</td></tr>
+                <?php else: ?>
+                    <?php foreach ($historico_consultas as $consulta): ?>
+                    <tr>
+                        <td><?php echo date('d/m/Y', strtotime($consulta['data'])); ?></td>
+                        <td><?php echo htmlspecialchars($consulta['procedimento']); ?></td>
+                        <td><?php echo htmlspecialchars(ucfirst($consulta['status'])); ?></td>
+                    </tr>
+                    <?php endforeach; ?>
+                <?php endif; ?>
             </tbody>
         </table>
     </section>
@@ -104,25 +139,10 @@ if (empty($dados_paciente)) {
     <section id="laudos" class="section-container">
         <h3 class="section-title">Laudos e Documentos</h3>
         <table class="tabela-consultas">
-              <thead><tr><th>Nome do Arquivo</th><th>Data de Upload</th><th>Ação</th></tr></thead>
-              <tbody>
-                <?php
-                // --- LÓGICA REAL PARA BUSCAR OS LAUDOS DO BANCO ---
-                /*
-                 * Substitua a tabela 'laudos' e as colunas pelos nomes corretos do seu banco.
-                */
-                // $stmt_laudos = $pdo->prepare("SELECT id_laudo, nome_arquivo_original, data_upload FROM laudos WHERE id_paciente = ? ORDER BY data_upload DESC");
-                // $stmt_laudos->execute([$id_paciente]);
-                // $lista_laudos = $stmt_laudos->fetchAll(PDO::FETCH_ASSOC);
-
-                // USANDO DADOS FICTÍCIOS POR ENQUANTO (COMENTE A LÓGICA ACIMA)
-                $lista_laudos = [
-                    ['id_laudo' => 1, 'nome_arquivo_original' => 'Raio-X_Panoramico_2025.pdf', 'data_upload' => '2025-03-15'],
-                    ['id_laudo' => 2, 'nome_arquivo_original' => 'Exame_de_Sangue.jpg', 'data_upload' => '2025-04-01'],
-                ];
-                
-                if (empty($lista_laudos)): ?>
-                    <tr><td colspan="3">Nenhum documento encontrado para este paciente.</td></tr>
+            <thead><tr><th>Nome do Arquivo</th><th>Data de Upload</th><th>Ação</th></tr></thead>
+            <tbody>
+                <?php if (empty($lista_laudos)): ?>
+                    <tr><td colspan="3" style="text-align: center;">Nenhum documento encontrado para este paciente.</td></tr>
                 <?php else: ?>
                     <?php foreach ($lista_laudos as $laudo): ?>
                     <tr>
@@ -134,7 +154,7 @@ if (empty($dados_paciente)) {
                     </tr>
                     <?php endforeach; ?>
                 <?php endif; ?>
-              </tbody>
+            </tbody>
         </table>
         
         <h4 style="margin-top: 2rem;">Enviar Novo Documento</h4>
@@ -148,7 +168,7 @@ if (empty($dados_paciente)) {
         </form>
     </section>
 
-    </main>
+</main>
 
 <?php
 include '../frontend/templates/footer.php';
