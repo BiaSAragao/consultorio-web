@@ -188,6 +188,7 @@ async function buscarHorarios(data, dentistaId) {
         });
     } catch (e) {
         console.error('Erro na busca de horários:', e);
-        divHorarios.innerHTML = `<p style="color: red;">Erro ao carregar horários. Verifique o caminho "../backend/buscar_horarios.php".</p>`;
+        // MUDANÇA PARA MENSAGEM MAIS LIMPA
+        divHorarios.innerHTML = `<p style="color: red;">Erro ao carregar horários. Verifique a conexão e tente novamente.</p>`;
     }
 }
