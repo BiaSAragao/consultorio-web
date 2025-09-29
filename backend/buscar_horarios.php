@@ -26,43 +26,34 @@ if (!$dentista_id || empty($data_consulta)) {
 try {
     // 2. Determinar o dia da semana em português
     $timestamp = strtotime($data_consulta);
-    if ($timestamp === false) {
-        throw new Exception("Formato de data inválido.");
-    }
-
-    $dia_semana_en = strtolower(date('l', $timestamp)); // Ex: 'monday'
+    $dia_semana_en = strtolower(date('l', $timestamp)); 
     
-    // Mapeamento de dias para o formato do banco de dados (tabela disponibilidade_dentista)
     $dias_semana = [
-        'monday' => 'segunda',
-        'tuesday' => 'terca',
-        'wednesday' => 'quarta',
-        'thursday' => 'quinta',
-        'friday' => 'sexta',
+        'monday' => 'segunda', 'tuesday' => 'terca', 'wednesday' => 'quarta',
+        'thursday' => 'quinta', 'friday' => 'sexta',
     ];
 
     $dia_semana_db = $dias_semana[$dia_semana_en] ?? null;
 
     if ($dia_semana_db === null) {
-        // Se for fim de semana ou um dia não mapeado
         echo json_encode(['disponiveis' => [], 'message' => 'O dentista não trabalha neste dia da semana.']);
         exit();
     }
 
-    // 3. Consultar horários disponíveis:
+    // 3. Consultar horários disponíveis: (QUERY CORRIGIDA)
     $sql = "
         SELECT 
             dd.horario
         FROM 
             disponibilidade_dentista dd
         LEFT JOIN 
-            consulta c ON dd.usuario_id = c.dentista_id 
-                        AND dd.horario = c.horario 
+            Consulta c ON dd.usuario_id = c.usuario_dentista -- CORRIGIDO: c.usuario_dentista
+                        AND dd.horario = c.hora              -- CORRIGIDO: c.hora
                         AND c.data = :data_consulta
         WHERE 
             dd.usuario_id = :dentista_id 
             AND dd.dia_semana = :dia_semana_db
-            -- A condição é que a consulta 'c' seja NULA (ou seja, horário não ocupado)
+            -- Horário é disponível se não houver consulta agendada para ele
             AND c.consulta_id IS NULL
         ORDER BY
             dd.horario ASC
