@@ -41,7 +41,7 @@ try {
     }
 
     // 3. Consultar horários disponíveis
-    // Requer que você tenha a tabela 'disponibilidade_dentista'
+    // NOTA: Requer que você tenha a tabela 'disponibilidade_dentista'
     $sql = "
         SELECT 
             dd.horario

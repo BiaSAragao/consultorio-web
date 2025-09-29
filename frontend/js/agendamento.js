@@ -6,36 +6,62 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Elementos do formulário
     const checkboxesServicos = document.querySelectorAll('input[name="servicos[]"]');
-    // ATUALIZADO: Usando 'dentista' conforme o seu HTML
-    const inputDentista = document.getElementById('dentista'); 
+    const inputDentistaSelecionado = document.getElementById('dentista_selecionado');
+    const dentistaInfoP = document.getElementById('dentista_info'); 
     const inputData = document.getElementById('data');
     const divHorarios = document.getElementById('lista-horarios');
     const inputHorarioSelecionado = document.getElementById('horario_selecionado');
     const inputServicosValidacao = document.getElementById('servicos_validacao');
-    
-    // O ID do dentista é lido uma vez, pois é fixo
-    const dentistaIdFixo = inputDentista.value; 
 
     // Inicializa o formulário no primeiro passo
     irParaPasso(1);
 
+    // Variável de controle para garantir que todos os serviços são do mesmo DENTISTA
+    let dentistaAtualSelecionado = null;
+
     // --- EVENTO DE SELEÇÃO DE SERVIÇO ---
     checkboxesServicos.forEach(checkbox => {
         checkbox.addEventListener('change', function() {
+            const dentistaId = this.dataset.dentistaId;
+            const nomeDentista = this.dataset.dentistaNome;
             
             const servicosMarcados = Array.from(checkboxesServicos).filter(cb => cb.checked);
             
-            // 1. Atualizar o estado do formulário
+            // 1. Lógica de Restrição de Dentista (garantir que seja o mesmo dentista)
+            if (this.checked) {
+                if (dentistaAtualSelecionado === null) {
+                    dentistaAtualSelecionado = dentistaId;
+                } else if (dentistaAtualSelecionado !== dentistaId) {
+                    alert(`Você só pode agendar serviços do(a) mesmo(a) profissional (${nomeDentista}).`);
+                    this.checked = false; // Desmarca a última seleção inválida
+                    return; 
+                }
+            } else if (servicosMarcados.length === 0) {
+                 // Limpa o estado se desmarcou o último serviço
+                 dentistaAtualSelecionado = null;
+            } else if (servicosMarcados.length > 0) {
+                // Se desmarcou, mas ainda há serviços, reconfirma o ID do dentista restante
+                dentistaAtualSelecionado = servicosMarcados[0].dataset.dentistaId;
+            }
+
+
+            // 2. Atualizar o estado do formulário
             if (servicosMarcados.length === 0) {
                 // Nenhum serviço marcado, limpa o estado
+                inputDentistaSelecionado.value = '';
+                dentistaInfoP.innerHTML = '**Selecione um serviço para ver o profissional responsável.**';
+                divHorarios.innerHTML = '<p>Selecione uma data para ver os horários disponíveis.</p>';
+                inputHorarioSelecionado.value = '';
                 inputServicosValidacao.value = '';
             } else {
-                // Ao menos um serviço marcado
+                // Atualiza com o dentista selecionado
+                inputDentistaSelecionado.value = dentistaAtualSelecionado;
+                dentistaInfoP.innerHTML = `Profissional Escolhido: Dr(a). **${nomeDentista}**`;
                 inputServicosValidacao.value = 'selecionado';
 
-                // Se já houver data selecionada, busca os horários
+                // Se já houver data selecionada, busca os horários desse dentista
                 if (inputData.value) {
-                    buscarHorarios(inputData.value, dentistaIdFixo);
+                    buscarHorarios(inputData.value, dentistaAtualSelecionado);
                 }
             }
         });
@@ -57,12 +83,13 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const data = this.value;
-            
-            if (data && dentistaIdFixo) {
-                // buscarHorarios usa o dentistaId fixo
-                buscarHorarios(data, dentistaIdFixo);
+            const dentistaId = inputDentistaSelecionado.value;
+
+            if (data && dentistaId) {
+                // buscarHorarios usa o dentistaId do campo hidden
+                buscarHorarios(data, dentistaId);
             } else {
-                divHorarios.innerHTML = '<p>Erro: ID do dentista não encontrado (fixo no PHP).';
+                divHorarios.innerHTML = '<p>Selecione um serviço e o dentista no Passo 1.</p>';
                 inputHorarioSelecionado.value = '';
             }
         });
@@ -86,10 +113,13 @@ function validarEPularPasso(passoAtual, proximoPasso) {
     
     if (passoAtual === 1) {
         const inputServicosValidacao = document.getElementById('servicos_validacao');
+        const inputDentistaSelecionado = document.getElementById('dentista_selecionado');
         
-        // Apenas verifica se algum serviço foi selecionado (o dentista é fixo)
         if (inputServicosValidacao.value !== 'selecionado') {
             alert(inputServicosValidacao.dataset.errorMessage);
+            valido = false;
+        } else if (!inputDentistaSelecionado.value) {
+            alert(document.getElementById('dentista_selecionado').dataset.errorMessage);
             valido = false;
         }
     } else if (passoAtual === 2) {

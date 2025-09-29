@@ -14,10 +14,7 @@ $usuario_nome = $_SESSION['usuario_nome'];
 $titulo_pagina = 'Agendar Consulta - SmileUp';
 $is_dashboard = false;
 
-// O ID do dentista fixo (conforme sua solicitação)
-$dentista_fixo_id = 3; 
-
-// 1. Função para buscar serviços e categorias
+// 1. Função para buscar serviços e categorias (CORRIGIDA)
 function buscarServicosECategorias($pdo) {
     $stmt = $pdo->query("
         SELECT 
@@ -26,11 +23,18 @@ function buscarServicosECategorias($pdo) {
             s.descricao,
             s.preco,
             c.nome AS nome_categoria,
-            c.categoria_id
+            c.categoria_id,
+            d.usuario_id AS dentista_id,      -- ID do dentista
+            u.nome AS nome_dentista,          -- Nome do dentista
+            d.cro
         FROM 
             Servico s
         JOIN 
             Categoria c ON s.categoria_id = c.categoria_id
+        JOIN
+            Dentista d ON c.dentista_id = d.usuario_id   -- JUNÇÃO CORRETA: Categoria tem o ID do Dentista
+        JOIN
+            Usuario u ON d.usuario_id = u.usuario_id
         ORDER BY
             c.nome, s.nome_servico
     ");
@@ -40,7 +44,7 @@ function buscarServicosECategorias($pdo) {
 // 2. OBTENDO DADOS DO BANCO PARA O FORMULÁRIO
 $servicosECategorias = buscarServicosECategorias($pdo);
 
-// Carrega cabeçalho e menu (assumindo que header.php e footer.php existem)
+// Carrega cabeçalho e menu
 include 'templates/header.php';
 ?>
 
@@ -57,12 +61,12 @@ include 'templates/header.php';
 
         <form action="../backend/processa_consulta.php" method="POST" id="form-agendamento">
             
-            <input type="hidden" name="dentista" id="dentista" value="<?php echo $dentista_fixo_id; ?>">
+            <input type="hidden" name="dentista" id="dentista_selecionado" value="" required data-error-message="O dentista deve ser selecionado após a escolha do serviço.">
 
             <div id="passo-1" class="passo-agendamento">
                 
                 <div class="form-group">
-                    <label>Selecione os serviços que deseja agendar (Você pode selecionar mais de um):</label>
+                    <label>Selecione os serviços que deseja agendar (Você pode selecionar mais de um, mas devem ser do **mesmo profissional**):</label>
                     <input type="hidden" name="servicos_validacao" id="servicos_validacao" required data-error-message="Selecione ao menos um serviço para continuar.">
                     
                     <div class="servicos-list">
@@ -82,10 +86,13 @@ include 'templates/header.php';
                                        id="servico_<?php echo $servico['servico_id']; ?>" 
                                        name="servicos[]" 
                                        value="<?php echo $servico['servico_id']; ?>" 
-                                       data-preco="<?php echo $servico['preco']; ?>">
+                                       data-preco="<?php echo $servico['preco']; ?>"
+                                       data-categoria-id="<?php echo $servico['categoria_id']; ?>" 
+                                       data-dentista-id="<?php echo $servico['dentista_id']; ?>"
+                                       data-dentista-nome="<?php echo htmlspecialchars($servico['nome_dentista']); ?>">
                                 <label for="servico_<?php echo $servico['servico_id']; ?>">
                                     <?php echo htmlspecialchars($servico['nome_servico']); ?> 
-                                    (R$ <?php echo number_format($servico['preco'], 2, ',', '.'); ?>)
+                                    (Com Dr(a). <?php echo htmlspecialchars($servico['nome_dentista']); ?> - R$ <?php echo number_format($servico['preco'], 2, ',', '.'); ?>)
                                 </label>
                             </div>
                         <?php endforeach; ?>
@@ -95,8 +102,8 @@ include 'templates/header.php';
                 
                 <div class="form-group">
                     <label for="dentista_info">Profissional Escolhido:</label>
-                    <p style="padding: 10px; border: 1px solid #ccc; background-color: #f8f9fa; border-radius: 4px;">
-                        **Dr(a). Fixo (ID <?php echo $dentista_fixo_id; ?>)**
+                    <p id="dentista_info" style="padding: 10px; border: 1px solid #ccc; background-color: #f8f9fa; border-radius: 4px;">
+                        **Selecione um serviço para ver o profissional responsável.**
                     </p>
                 </div>
 
@@ -240,6 +247,7 @@ include 'templates/header.php';
         color: #333;
     }
 </style>
+
 
 <script src="js/agendamento.js"></script>
 
