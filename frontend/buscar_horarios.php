@@ -2,10 +2,15 @@
 
 <?php
 // Define o cabeçalho para retornar JSON
-header('Content-Type: application/json');
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+// ----------------------------------------------------
 
-// Carrega o arquivo de conexão com o banco de dados
-require_once "../backend/conexao.php"; // Verifique se este caminho está correto
+// Corrigido na última etapa:
+require_once "../backend/conexao.php"; 
+
+header('Content-Type: application/json');
 
 // 1. Validar e capturar dados de entrada (via POST)
 if (!isset($_POST['dentista_id']) || !isset($_POST['data'])) {
