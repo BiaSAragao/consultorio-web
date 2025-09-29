@@ -34,7 +34,7 @@ try {
     // Buscamos dados da tabela Usuario (nome, email, tel) e Paciente (cpf, plano, dt_nasc)
     $sql_dados_paciente = "
         SELECT 
-            u.nome, u.telefone, u.email, 
+            u.nome, u.tel AS telefone, u.email, 
             p.cpf, p.plano_saude, p.data_nascimento
         FROM Usuario u
         JOIN Paciente p ON u.usuario_id = p.usuario_id

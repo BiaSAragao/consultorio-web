@@ -74,7 +74,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 try {
     // 2. Busca dos dados atuais do usuário (tabela Usuario)
-    $sql_usuario = "SELECT nome, email, telefone FROM Usuario WHERE usuario_id = :id";
+    $sql_usuario = "SELECT nome, email, tel AS telefone FROM Usuario WHERE usuario_id = :id";
     $stmt_usuario = $pdo->prepare($sql_usuario);
     $stmt_usuario->execute([':id' => $dentista_id]);
     $dados_usuario = $stmt_usuario->fetch(PDO::FETCH_ASSOC);

@@ -36,8 +36,9 @@
                 ?>
                         <li><a href="dashboard-dentista.php#agenda-do-dia" class="nav-link">Minha Agenda</a></li>
                         <li><a href="dashboard-dentista.php#meus-horarios" class="nav-link">Gerenciar Horários</a></li>
-                       <li><a href="meus-pacientes.php" class="nav-link">Meus Pacientes</a></li>
+                        <li><a href="meus-pacientes.php" class="nav-link">Meus Pacientes</a></li>
                         <li><a href="dashboard-dentista.php#estoque" class="nav-link">Estoque </a></li>
+                        <li><a href="editar-perfil-dentista.php" class="nav-link">Editar Perfil</a></li>
                         <li><a href="../backend/logout.php" class="nav-link btn-secondary" style="padding: 0.5rem 1rem; border-radius: 9999px;">Sair</a></li>
 
                 <?php

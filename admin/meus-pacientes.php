@@ -35,7 +35,7 @@ try {
         SELECT DISTINCT 
             u.usuario_id AS id, 
             u.nome, 
-            u.telefone
+            u.tel AS telefone
         FROM Usuario u
         JOIN Paciente p ON u.usuario_id = p.usuario_id
         JOIN Consulta c ON u.usuario_id = c.usuario_paciente
