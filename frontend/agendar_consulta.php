@@ -106,11 +106,11 @@ function buscarHorariosHTML($pdo, $dentista_id, $data_consulta) {
 // NOVO CÓDIGO DE TRATAMENTO DE URL (COLOQUE ANTES DO HTML, APÓS AS FUNÇÕES PHP)
 
 $horarios_html = '<p>Selecione uma data para ver os horários disponíveis.</p>';
-// Captura os valores da URL (GET) ou de outros campos
 $data_selecionada = $_GET['data'] ?? '';
 $dentista_selecionado = $_GET['dentista_id'] ?? '';
+// NOVO: Coleta os IDs dos serviços da URL. Se não vier nada, será um array vazio.
+$servicos_selecionados_get = $_GET['servicos'] ?? [];
 
-// Se data e dentista_id estiverem na URL, chama a função de busca
 if (!empty($data_selecionada) && !empty($dentista_selecionado)) {
     $horarios_html = buscarHorariosHTML($pdo, $dentista_selecionado, $data_selecionada);
 }

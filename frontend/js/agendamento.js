@@ -95,6 +95,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- EVENTO DE SELEÇÃO DE DATA (AGORA RECARREGA A PÁGINA) ---
     if(inputData) {
         inputData.addEventListener('change', function() {
+            // ... (Verificação de data passada mantida)
             const dataSelecionada = new Date(this.value + "T00:00:00");
             const hoje = new Date();
             hoje.setHours(0, 0, 0, 0);
@@ -109,14 +110,26 @@ document.addEventListener('DOMContentLoaded', () => {
             const dentistaId = inputDentistaSelecionado.value;
 
             if (data && dentistaId) {
-                // *** AÇÃO PRINCIPAL: REDIRECIONAR PARA O GET COM OS NOVOS VALORES ***
-                window.location.href = `agendar_consulta.php?dentista_id=${dentistaId}&data=${data}#passo-2`;
+                // 1. COLETAR IDs dos SERVIÇOS SELECIONADOS
+                const servicosSelecionados = Array.from(checkboxesServicos)
+                    .filter(cb => cb.checked)
+                    .map(cb => `servicos[]=${cb.value}`) // Formata como 'servicos[]=ID'
+                    .join('&'); // Junta todos os parâmetros com '&'
+
+                // 2. REDIRECIONAR INCLUINDO DENTISTA, DATA E SERVIÇOS
+                let url = `agendar_consulta.php?dentista_id=${dentistaId}&data=${data}`;
+                if (servicosSelecionados) {
+                    url += `&${servicosSelecionados}`;
+                }
+                url += `#passo-2`;
+                
+                window.location.href = url;
+                
             } else {
                 alert('Selecione um serviço e o dentista no Passo 1 antes de escolher a data.');
             }
         });
     }
-
     // A função buscarHorarios FOI REMOVIDA
 });
 
