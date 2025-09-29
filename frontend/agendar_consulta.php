@@ -28,7 +28,7 @@ function buscarServicosECategorias($pdo) {
             s.preco,
             c.nome AS nome_categoria,
             c.categoria_id,
-            c.usuario_dentista_responsavel,
+            c.dentista_id,
             d.nome AS nome_dentista_responsavel
         FROM 
             Servico s
