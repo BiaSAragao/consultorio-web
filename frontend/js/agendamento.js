@@ -1,4 +1,4 @@
-// Arquivo: js/agendamento.js (Atualizado)
+// Arquivo: /frontend/js/agendamento.js
 
 // --- LÓGICA PARA O FORMULÁRIO DE AGENDAMENTO EM PASSOS ---
 
@@ -6,81 +6,37 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Elementos do formulário
     const checkboxesServicos = document.querySelectorAll('input[name="servicos[]"]');
-    const inputDentistaSelecionado = document.getElementById('dentista_selecionado');
-    const dentistaInfoP = document.getElementById('dentista_info'); 
+    // ATUALIZADO: Usando 'dentista' conforme o seu HTML
+    const inputDentista = document.getElementById('dentista'); 
     const inputData = document.getElementById('data');
     const divHorarios = document.getElementById('lista-horarios');
     const inputHorarioSelecionado = document.getElementById('horario_selecionado');
     const inputServicosValidacao = document.getElementById('servicos_validacao');
+    
+    // O ID do dentista é lido uma vez, pois é fixo
+    const dentistaIdFixo = inputDentista.value; 
 
     // Inicializa o formulário no primeiro passo
     irParaPasso(1);
 
-    // Variável de controle para garantir que todos os serviços são da mesma categoria
-    let categoriaAtualSelecionada = null;
-
     // --- EVENTO DE SELEÇÃO DE SERVIÇO ---
     checkboxesServicos.forEach(checkbox => {
-        checkbox.addEventListener('change', async function() {
-            const categoriaId = this.dataset.categoriaId;
+        checkbox.addEventListener('change', function() {
             
             const servicosMarcados = Array.from(checkboxesServicos).filter(cb => cb.checked);
             
-            // 1. Lógica de Restrição de Categoria (apenas serviços da mesma categoria)
-            if (this.checked) {
-                if (categoriaAtualSelecionada === null) {
-                    categoriaAtualSelecionada = categoriaId;
-                } else if (categoriaAtualSelecionada !== categoriaId) {
-                    const nomeCategoria = this.dataset.categoriaNome;
-                    alert(`Você só pode agendar serviços da mesma categoria (${nomeCategoria}).`);
-                    this.checked = false; // Desmarca a última seleção inválida
-                    return; 
-                }
-            }
-            
-            // Se desmarcou, verifica se ainda há algum serviço marcado
+            // 1. Atualizar o estado do formulário
             if (servicosMarcados.length === 0) {
                 // Nenhum serviço marcado, limpa o estado
-                categoriaAtualSelecionada = null;
-                inputDentistaSelecionado.value = '';
-                dentistaInfoP.innerHTML = '**Selecione um serviço para ver o dentista responsável.**';
-                divHorarios.innerHTML = '<p>Selecione uma data para ver os horários disponíveis.</p>';
-                inputHorarioSelecionado.value = '';
                 inputServicosValidacao.value = '';
-                return;
-            }
+            } else {
+                // Ao menos um serviço marcado
+                inputServicosValidacao.value = 'selecionado';
 
-            // 2. Atualiza campo de validação de serviços
-            inputServicosValidacao.value = servicosMarcados.length > 0 ? 'selecionado' : '';
-
-            // 3. Buscar Dentista via AJAX
-            const categoriaBusca = servicosMarcados[0].dataset.categoriaId;
-
-            try {
-                // Chama get_dentista.php via GET (conforme o código original que você enviou)
-                const resp = await fetch(`../backend/get_dentista.php?categoria_id=${categoriaBusca}`);
-                const dentista = await resp.json();
-                
-                if (dentista.error) {
-                    dentistaInfoP.innerHTML = `**ERRO:** ${dentista.error}`;
-                    inputDentistaSelecionado.value = '';
-                    divHorarios.innerHTML = '<p>Selecione uma data para ver os horários disponíveis.</p>';
-                    return;
+                // Se já houver data selecionada, busca os horários
+                if (inputData.value) {
+                    buscarHorarios(inputData.value, dentistaIdFixo);
                 }
-
-                if (dentista && dentista.usuario_id) {
-                    dentistaInfoP.innerHTML = `Dr(a). **${dentista.nome}** (CRO: ${dentista.cro})`;
-                    inputDentistaSelecionado.value = dentista.usuario_id;
-                    
-                    // Se já houver data selecionada, busca os horários desse dentista
-                    if (inputData.value) {
-                        buscarHorarios(inputData.value, dentista.usuario_id);
-                    }
-                }
-            } catch (e) {
-                console.error("Erro na busca do dentista:", e);
-                dentistaInfoP.innerHTML = '**Erro ao buscar dentista. Verifique a conexão.**';
-                inputDentistaSelecionado.value = '';
             }
         });
     });
@@ -101,12 +57,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const data = this.value;
-            const dentistaId = inputDentistaSelecionado.value;
-
-            if (data && dentistaId) {
-                buscarHorarios(data, dentistaId);
+            
+            if (data && dentistaIdFixo) {
+                // buscarHorarios usa o dentistaId fixo
+                buscarHorarios(data, dentistaIdFixo);
             } else {
-                divHorarios.innerHTML = '<p>Selecione um serviço e o dentista no Passo 1.</p>';
+                divHorarios.innerHTML = '<p>Erro: ID do dentista não encontrado (fixo no PHP).';
                 inputHorarioSelecionado.value = '';
             }
         });
@@ -130,13 +86,10 @@ function validarEPularPasso(passoAtual, proximoPasso) {
     
     if (passoAtual === 1) {
         const inputServicosValidacao = document.getElementById('servicos_validacao');
-        const inputDentistaSelecionado = document.getElementById('dentista_selecionado');
         
+        // Apenas verifica se algum serviço foi selecionado (o dentista é fixo)
         if (inputServicosValidacao.value !== 'selecionado') {
             alert(inputServicosValidacao.dataset.errorMessage);
-            valido = false;
-        } else if (!inputDentistaSelecionado.value) {
-            alert(document.getElementById('dentista_selecionado').dataset.errorMessage);
             valido = false;
         }
     } else if (passoAtual === 2) {
@@ -153,7 +106,7 @@ function validarEPularPasso(passoAtual, proximoPasso) {
     }
 }
 
-// --- FUNÇÃO DE BUSCA DE HORÁRIOS DISPONÍVEIS (Usa POST para buscar_horarios.php) ---
+// --- FUNÇÃO DE BUSCA DE HORÁRIOS DISPONÍVEIS (Chama buscar_horarios.php) ---
 async function buscarHorarios(data, dentistaId) {
     const divHorarios = document.getElementById('lista-horarios');
     const inputHorarioSelecionado = document.getElementById('horario_selecionado');
@@ -169,6 +122,10 @@ async function buscarHorarios(data, dentistaId) {
             body: `dentista_id=${dentistaId}&data=${data}`
         });
         
+        if (!resp.ok) {
+            throw new Error(`HTTP ${resp.status}`);
+        }
+
         const dataJson = await resp.json();
 
         divHorarios.innerHTML = '';
@@ -201,6 +158,6 @@ async function buscarHorarios(data, dentistaId) {
         });
     } catch (e) {
         console.error('Erro na busca de horários:', e);
-        divHorarios.innerHTML = '<p>Erro ao carregar horários. Verifique a conexão e o arquivo buscar_horarios.php.</p>';
+        divHorarios.innerHTML = `<p style="color: red;">Erro ao carregar horários. Verifique o caminho "../backend/buscar_horarios.php".</p>`;
     }
 }

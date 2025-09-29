@@ -1,13 +1,13 @@
-// Arquivo: backend/buscar_horarios.php
+// Arquivo: /backend/buscar_horarios.php
 
 <?php
 // Define o cabeçalho para retornar JSON
 header('Content-Type: application/json');
 
 // Carrega o arquivo de conexão com o banco de dados
-require_once "conexao.php";
+require_once "conexao.php"; // Verifique se este caminho está correto
 
-// 1. Validar e capturar dados de entrada (via POST, conforme o JS)
+// 1. Validar e capturar dados de entrada (via POST)
 if (!isset($_POST['dentista_id']) || !isset($_POST['data'])) {
     http_response_code(400);
     echo json_encode(['error' => 'Dados insuficientes (Dentista ID e Data são obrigatórios).']);
@@ -40,20 +40,21 @@ try {
         exit();
     }
 
-    // 3. Consultar horários disponíveis: (QUERY CORRIGIDA)
+    // 3. Consultar horários disponíveis
+    // Requer que você tenha a tabela 'disponibilidade_dentista'
     $sql = "
         SELECT 
             dd.horario
         FROM 
             disponibilidade_dentista dd
         LEFT JOIN 
-            Consulta c ON dd.usuario_id = c.usuario_dentista -- CORRIGIDO: c.usuario_dentista
-                        AND dd.horario = c.hora              -- CORRIGIDO: c.hora
+            Consulta c ON dd.usuario_id = c.usuario_dentista 
+                        AND dd.horario = c.hora              
                         AND c.data = :data_consulta
         WHERE 
             dd.usuario_id = :dentista_id 
             AND dd.dia_semana = :dia_semana_db
-            -- Horário é disponível se não houver consulta agendada para ele
+            -- Horário é disponível se não houver consulta agendada
             AND c.consulta_id IS NULL
         ORDER BY
             dd.horario ASC
