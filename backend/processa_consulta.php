@@ -24,8 +24,8 @@ try {
     
     // Dados adicionais
     $observacoes = $_POST["observacoes"] ?? '';
-    $historico   = $_POST["historico"] ?? '';
-    $alergias    = $_POST["alergias"] ?? '';
+    $historico = $_POST["historico"] ?? '';
+    $alergias = $_POST["alergias"] ?? '';
 
     $usuario_paciente = $_SESSION["usuario_id"];
     
