@@ -1,8 +1,10 @@
-// Arquivo: backend/get_dentista.php
+// Arquivo: backend/get_dentista.php (FINAL E CORRIGIDO)
 
 <?php
 header('Content-Type: application/json');
-require_once "conexao.php"; // Verifique se este caminho está correto (ex: ./conexao.php ou ../conexao.php)
+
+// IMPORTANTE: Use o caminho de conexão que funciona no seu servidor!
+require_once "conexao.php"; 
 
 if (!isset($_GET['categoria_id'])) {
     http_response_code(400);
@@ -13,25 +15,21 @@ if (!isset($_GET['categoria_id'])) {
 $categoria_id = filter_var($_GET['categoria_id'], FILTER_VALIDATE_INT);
 
 try {
-    // NOVA LÓGICA: Liga Categoria -> Servico -> Consulta_servico -> Consulta -> Dentista.
-    // Isso encontra um dentista que já realizou um serviço dessa categoria.
+    // LÓGICA CORRETA: Junta Categoria diretamente com Dentista e Usuario.
+    // Presume-se que a coluna na tabela Categoria é 'dentista_id'.
     $sql = "
-        SELECT DISTINCT
+        SELECT 
             u.usuario_id, 
             u.nome,
             d.cro
         FROM 
-            Servico s
+            Categoria c
         JOIN
-            Consulta_servico cs ON s.servico_id = cs.servico_id
-        JOIN
-            Consulta c ON cs.consulta_id = c.consulta_id
-        JOIN
-            Dentista d ON c.usuario_dentista = d.usuario_id
+            Dentista d ON c.dentista_id = d.usuario_id -- JUNÇÃO DIRETA CORRIGIDA
         JOIN
             Usuario u ON d.usuario_id = u.usuario_id
         WHERE 
-            s.categoria_id = :categoria_id
+            c.categoria_id = :categoria_id
         LIMIT 1
     ";
 
@@ -42,23 +40,16 @@ try {
     $dentista = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($dentista) {
+        // Sucesso: retorna o dentista para o JS
         echo json_encode($dentista);
     } else {
         http_response_code(404);
-        echo json_encode([
-            'error' => 'Nenhum dentista encontrado.',
-            'message' => 'Nenhum profissional está associado a esta categoria, ou não há agendamentos anteriores para esta categoria no banco de dados.'
-        ]);
+        echo json_encode(['error' => 'Nenhum dentista encontrado para esta categoria. Verifique se a coluna dentista_id está preenchida na tabela Categoria.']);
     }
 
 } catch (PDOException $e) {
     http_response_code(500);
-    echo json_encode([
-        'error' => 'Erro interno do servidor (PDO).', 
-        'detail' => 'Verifique se as tabelas Servico, Consulta_servico, Consulta, Dentista e Usuario estão preenchidas e se o arquivo de conexão está correto.'
-    ]);
-} catch (Exception $e) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Erro inesperado: ' . $e->getMessage()]);
+    // Se este erro ainda aparecer, o problema é no require_once ou nas credenciais.
+    echo json_encode(['error' => 'Erro fatal de Conexão/SQL. Detalhe: ' . $e->getMessage()]);
 }
 ?>
