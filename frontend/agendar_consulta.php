@@ -9,18 +9,17 @@ if (!isset($_SESSION["usuario_id"])) {
     exit();
 }
 
+// 1. DADOS BÁSICOS
 $usuario_id = $_SESSION['usuario_id'];
 $usuario_nome = $_SESSION['usuario_nome'];
 $titulo_pagina = 'Agendar Consulta - SmileUp';
 $is_dashboard = false;
 
-// O ID do dentista fixo (conforme sua solicitação)
-$dentista_fixo_id = 3; 
+// O ID do dentista fixo FOI REMOVIDO. O dentista será determinado pelo serviço/categoria.
 
-// A busca por todos os dentistas (função buscarTodosDentistas) FOI REMOVIDA.
-
-// 1. Função para buscar serviços e categorias (MANTIDA)
+// 2. Função para buscar serviços e categorias (COM DENTISTA RESPONSÁVEL)
 function buscarServicosECategorias($pdo) {
+    // ASSUMIMOS QUE A TABELA 'Categoria' TEM UMA COLUNA 'usuario_dentista_responsavel'
     $stmt = $pdo->query("
         SELECT 
             s.servico_id, 
@@ -28,18 +27,22 @@ function buscarServicosECategorias($pdo) {
             s.descricao,
             s.preco,
             c.nome AS nome_categoria,
-            c.categoria_id
+            c.categoria_id,
+            c.usuario_dentista_responsavel,
+            d.nome AS nome_dentista_responsavel
         FROM 
             Servico s
         JOIN 
             Categoria c ON s.categoria_id = c.categoria_id
+        JOIN
+            Usuario d ON c.dentista_id = d.usuario_id -- Busca o nome do dentista
         ORDER BY
             c.nome, s.nome_servico
     ");
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
-// 2. OBTENDO DADOS DO BANCO PARA O FORMULÁRIO
+// 3. OBTENDO DADOS DO BANCO PARA O FORMULÁRIO
 $servicosECategorias = buscarServicosECategorias($pdo);
 
 // Carrega cabeçalho e menu
@@ -59,7 +62,7 @@ include 'templates/header.php';
 
         <form action="../backend/processa_consulta.php" method="POST" id="form-agendamento">
             
-            <input type="hidden" name="dentista" id="dentista" value="<?php echo $dentista_fixo_id; ?>">
+            <input type="hidden" name="dentista" id="dentista" value="" required data-error-message="O dentista não foi determinado.">
 
             <div id="passo-1" class="passo-agendamento">
                 
@@ -70,22 +73,36 @@ include 'templates/header.php';
                     <div class="servicos-list">
                         <?php 
                         $categoria_atual = '';
+                        // Dicionário de Dentistas para o JavaScript usar na validação/exibição
+                        $dentistas_por_categoria = []; 
+                        
                         foreach ($servicosECategorias as $servico): 
+                            
+                            // Preenche o array para o JS (dentro do JSON)
+                            $dentistas_por_categoria[$servico['categoria_id']] = [
+                                'id' => $servico['usuario_dentista_responsavel'],
+                                'nome' => $servico['nome_dentista_responsavel']
+                            ];
+
                             if ($servico['nome_categoria'] != $categoria_atual):
                                 if ($categoria_atual != ''): ?>
                                     </fieldset>
                                 <?php endif;
                                 $categoria_atual = $servico['nome_categoria']; ?>
                                 <fieldset class="fieldset-servico">
-                                    <legend><strong><?php echo htmlspecialchars($categoria_atual); ?></strong></legend>
+                                    <legend>
+                                        <strong><?php echo htmlspecialchars($categoria_atual); ?></strong> 
+                                        (Responsável: <?php echo htmlspecialchars($servico['nome_dentista_responsavel']); ?>)
+                                    </legend>
                             <?php endif; ?>
                             <div class="servico-item">
                                 <input type="checkbox" 
                                        id="servico_<?php echo $servico['servico_id']; ?>" 
                                        name="servicos[]" 
                                        value="<?php echo $servico['servico_id']; ?>" 
-                                       data-preco="<?php echo $servico['preco']; ?>">
-                                <label for="servico_<?php echo $servico['servico_id']; ?>">
+                                       data-preco="<?php echo $servico['preco']; ?>"
+                                       data-categoria-id="<?php echo $servico['categoria_id']; ?>"
+                                       data-dentista-id="<?php echo $servico['usuario_dentista_responsavel']; ?>"> <label for="servico_<?php echo $servico['servico_id']; ?>">
                                     <?php echo htmlspecialchars($servico['nome_servico']); ?> 
                                     (R$ <?php echo number_format($servico['preco'], 2, ',', '.'); ?>)
                                 </label>
@@ -97,9 +114,10 @@ include 'templates/header.php';
                 
                 <div class="form-group">
                     <label for="dentista_info">Profissional Escolhido:</label>
-                    <p style="padding: 10px; border: 1px solid #ccc; background-color: #f8f9fa; border-radius: 4px;">
-                        **Dr(a). Fixo (ID <?php echo $dentista_fixo_id; ?>)**
+                    <p id="dentista_info" style="padding: 10px; border: 1px solid #ccc; background-color: #f8f9fa; border-radius: 4px;">
+                        **Selecione o serviço para determinar o Dentista.**
                     </p>
+                    <input type="hidden" id="categoria_selecionada" data-error-message="Não é possível agendar serviços de diferentes categorias (e dentistas) na mesma consulta.">
                 </div>
 
                 <div class="botoes-navegacao">
@@ -160,6 +178,7 @@ include 'templates/header.php';
 </main>
 
 <style>
+/* ... (Seu CSS permanece o mesmo) ... */
     .botoes-navegacao {
         display: flex;
         justify-content: flex-end;
