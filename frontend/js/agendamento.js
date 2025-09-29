@@ -144,7 +144,8 @@ async function buscarHorarios(data, dentistaId) {
     divHorarios.innerHTML = '<p>Carregando horários...</p>';
 
     try {
-        const resp = await fetch('../buscar_horarios.php', { // CAMINHO CORRIGIDO
+        // Chamada para o novo script que retorna HTML
+        const resp = await fetch('../buscar_horarios.php', { 
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
@@ -152,43 +153,28 @@ async function buscarHorarios(data, dentistaId) {
             body: `dentista_id=${dentistaId}&data=${data}`
         });
         
+        // Se a requisição HTTP falhar (ex: 404, 500), tratamos aqui
         if (!resp.ok) {
-            throw new Error(`HTTP ${resp.status}`);
+            throw new Error(`Erro HTTP ${resp.status}`);
         }
 
-        const dataJson = await resp.json();
+        // NOVO: Lê o resultado como TEXTO (HTML)
+        const html = await resp.text(); 
 
-        divHorarios.innerHTML = '';
+        divHorarios.innerHTML = html;
 
-        if (dataJson.error) {
-             divHorarios.innerHTML = `<p style="color: red;">Erro: ${dataJson.error}</p>`;
-             return;
-        }
-        
-        const horarios = dataJson.disponiveis || []; 
-
-        if (horarios.length === 0) {
-            divHorarios.innerHTML = `<p>${dataJson.message || 'Nenhum horário disponível para esta data.'}</p>`;
-            return;
-        }
-
-        horarios.forEach(horario => {
-            const btnHorario = document.createElement('div');
-            btnHorario.className = 'horario-item';
-            btnHorario.textContent = horario.substring(0, 5); 
-            btnHorario.dataset.horario = horario;
-
+        // Re-liga os Eventos de Clique aos novos botões de horário
+        document.querySelectorAll('.horario-item').forEach(btnHorario => {
             btnHorario.addEventListener('click', function() {
                 document.querySelectorAll('.horario-item.selected').forEach(btn => btn.classList.remove('selected'));
                 this.classList.add('selected');
                 inputHorarioSelecionado.value = this.dataset.horario;
             });
-
-            divHorarios.appendChild(btnHorario);
         });
+
     } catch (e) {
         console.error('Erro na busca de horários:', e);
-        // MUDANÇA PARA MENSAGEM MAIS LIMPA
-        divHorarios.innerHTML = `<p style="color: red;">Erro ao carregar horários. Verifique a conexão e tente novamente.</p>`;
+        // Esta mensagem só aparece se o fetch FALHAR (conexão, 404, etc.)
+        divHorarios.innerHTML = `<p style="color: red;">Erro de comunicação com o servidor. Tente novamente.</p>`;
     }
 }

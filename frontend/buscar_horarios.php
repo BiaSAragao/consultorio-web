@@ -1,42 +1,20 @@
+// Arquivo: /frontend/get_horarios_html.php
+
 <?php
-// Define o cabeçalho para retornar JSON
-// --- LINHAS DE DEBUG ATIVADAS ---
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-// ------------------------------------
-
-// 1. Caminho de conexão corrigido (subindo um nível para /backend/)
+// ATENÇÃO: Verifique se a conexão está OK
 require_once "../backend/conexao.php"; 
-
-// 2. Verificação de Escopo do $pdo: Garante que a variável de conexão existe
-if (!isset($pdo) || !$pdo) {
-    http_response_code(500);
-    echo json_encode(['error' => 'ERRO FATAL: Variável de conexão $pdo não está acessível.']);
-    exit();
-}
-// ------------------------------------
-
-header('Content-Type: application/json');
 
 // 1. Validar e capturar dados de entrada (via POST)
 if (!isset($_POST['dentista_id']) || !isset($_POST['data'])) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Dados insuficientes (Dentista ID e Data são obrigatórios).']);
+    echo '<p style="color: red;">Dados insuficientes para buscar horários.</p>';
     exit();
 }
 
 $dentista_id = filter_var($_POST['dentista_id'], FILTER_VALIDATE_INT);
 $data_consulta = $_POST['data'];
 
-if (!$dentista_id || empty($data_consulta)) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Dados de dentista ou data inválidos.']);
-    exit();
-}
-
+// 2. Lógica do Dia da Semana
 try {
-    // 2. Determinar o dia da semana em português
     $timestamp = strtotime($data_consulta);
     $dia_semana_en = strtolower(date('l', $timestamp)); 
     
@@ -48,24 +26,23 @@ try {
     $dia_semana_db = $dias_semana[$dia_semana_en] ?? null;
 
     if ($dia_semana_db === null) {
-        echo json_encode(['disponiveis' => [], 'message' => 'O dentista não trabalha neste dia da semana.']);
+        echo '<p>O dentista não trabalha neste dia da semana.</p>';
         exit();
     }
 
-    // 3. Consultar horários disponíveis
+    // 3. Consulta (USANDO A VERSÃO CORRIGIDA com 'consulta' minúsculo)
     $sql = "
         SELECT 
             dd.horario
         FROM 
             disponibilidade_dentista dd
         LEFT JOIN 
-            consulta c ON dd.usuario_id = c.usuario_dentista  -- CORREÇÃO: 'consulta' em minúsculo
-                        AND dd.horario = c.hora              
+            consulta c ON dd.usuario_id = c.usuario_dentista 
+                        AND dd.horario = c.hora             
                         AND c.data = :data_consulta
         WHERE 
             dd.usuario_id = :dentista_id 
             AND dd.dia_semana = :dia_semana_db
-            -- Horário é disponível se não houver consulta agendada
             AND c.consulta_id IS NULL
         ORDER BY
             dd.horario ASC
@@ -80,18 +57,18 @@ try {
     $horarios_disponiveis = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
     if (empty($horarios_disponiveis)) {
-        echo json_encode(['disponiveis' => [], 'message' => 'Nenhum horário disponível encontrado para esta data.']);
+        echo '<p>Nenhum horário disponível encontrado para esta data.</p>';
     } else {
-        echo json_encode(['disponiveis' => $horarios_disponiveis]);
+        // 4. Retorna HTML dos botões de horário
+        foreach ($horarios_disponiveis as $horario) {
+            $hora_formatada = substr($horario, 0, 5);
+            echo "<div class='horario-item' data-horario='{$horario}'>{$hora_formatada}</div>";
+        }
     }
 
 } catch (PDOException $e) {
-    // Captura erros SQL (Ex: coluna não encontrada)
-    http_response_code(500);
-    echo json_encode(['error' => 'Erro interno do servidor (PDO): ' . $e->getMessage()]);
+    echo '<p style="color: red;">Erro interno do servidor ao buscar horários. Contate o suporte.</p>';
 } catch (Exception $e) {
-    // Captura erros gerais
-    http_response_code(500);
-    echo json_encode(['error' => 'Erro: ' . $e->getMessage()]);
+    echo '<p style="color: red;">Erro: Falha no processamento.</p>';
 }
 ?>
