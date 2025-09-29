@@ -156,34 +156,41 @@ function buscarServicos($pdo, $consulta_id) {
                     </tr>
                 </thead>
                 <tbody>
-                    <?php
-                    // --- LÓGICA REAL PARA BUSCAR OS LAUDOS DO PACIENTE LOGADO ---
-                    /*
-                    * Substitua a tabela 'laudos' e as colunas pelos nomes corretos do seu banco.
-                    */
-                    // $stmt_laudos = $pdo->prepare("SELECT id_laudo, nome_arquivo_original, data_upload FROM laudos WHERE id_paciente = ? ORDER BY data_upload DESC");
-                    // $stmt_laudos->execute([$usuario_id]);
-                    // $lista_laudos_paciente = $stmt_laudos->fetchAll(PDO::FETCH_ASSOC);
+                    <tbody>
+                        <?php
+                        // --- LÓGICA REAL PARA BUSCAR OS LAUDOS DO PACIENTE LOGADO ---
+                        try {
+                            // Busca os laudos na nova tabela 'Documento'
+                            $stmt_laudos = $pdo->prepare("
+                                SELECT 
+                                    documento_id AS id_laudo, 
+                                    nome_arquivo_original, 
+                                    data_upload
+                                FROM Documento 
+                                WHERE usuario_paciente = :id_paciente 
+                                ORDER BY data_upload DESC
+                            ");
+                            $stmt_laudos->execute([':id_paciente' => $usuario_id]);
+                            $lista_laudos_paciente = $stmt_laudos->fetchAll(PDO::FETCH_ASSOC);
+                        } catch (PDOException $e) {
+                            // Em caso de erro de banco de dados
+                            $lista_laudos_paciente = []; 
+                            echo '<tr><td colspan="3" style="color: red; text-align: center;">Erro ao carregar documentos do banco.</td></tr>';
+                        }
+                        
+                        if (empty($lista_laudos_paciente)): ?>
+                            <tr><td colspan="3">Nenhum documento disponível no momento.</td></tr>
+                        <?php else: ?>
+                            <?php foreach ($lista_laudos_paciente as $laudo): ?>
+                            <tr>
+                                <td><?php echo htmlspecialchars($laudo['nome_arquivo_original']); ?></td>
+                                <td><?php echo date('d/m/Y', strtotime($laudo['data_upload'])); ?></td>
+                                
+                                <td><a href="../backend/download_laudo.php?id=<?php echo $laudo['id_laudo']; ?>" class="btn-tabela btn-secondary">Baixar</a></td>
 
-                    // USANDO DADOS FICTÍCIOS POR ENQUANTO (COMENTE A LÓGICA ACIMA)
-                    $lista_laudos_paciente = [
-                        ['id_laudo' => 1, 'nome_arquivo_original' => 'Raio-X_Panoramico_2025.pdf', 'data_upload' => '2025-03-15'],
-                        ['id_laudo' => 2, 'nome_arquivo_original' => 'Exame_de_Sangue.jpg', 'data_upload' => '2025-04-01'],
-                    ];
-                    
-                    if (empty($lista_laudos_paciente)): ?>
-                        <tr><td colspan="3">Nenhum documento disponível no momento.</td></tr>
-                    <?php else: ?>
-                        <?php foreach ($lista_laudos_paciente as $laudo): ?>
-                        <tr>
-                            <td><?php echo htmlspecialchars($laudo['nome_arquivo_original']); ?></td>
-                            <td><?php echo date('d/m/Y', strtotime($laudo['data_upload'])); ?></td>
-                            
-                            <td><a href="../backend/download_laudo.php?id=<?php echo $laudo['id_laudo']; ?>" class="btn-tabela btn-secondary">Baixar</a></td>
-
-                        </tr>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
+                            </tr>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
                 </tbody>
             </table>
         </div>
