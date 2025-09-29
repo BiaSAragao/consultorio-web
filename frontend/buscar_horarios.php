@@ -5,7 +5,7 @@
 header('Content-Type: application/json');
 
 // Carrega o arquivo de conexão com o banco de dados
-require_once "conexao.php"; // Verifique se este caminho está correto
+require_once "../backend/conexao.php"; // Verifique se este caminho está correto
 
 // 1. Validar e capturar dados de entrada (via POST)
 if (!isset($_POST['dentista_id']) || !isset($_POST['data'])) {

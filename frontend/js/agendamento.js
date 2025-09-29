@@ -144,7 +144,7 @@ async function buscarHorarios(data, dentistaId) {
     divHorarios.innerHTML = '<p>Carregando horários...</p>';
 
     try {
-        const resp = await fetch('../backend/buscar_horarios.php', {
+        const resp = await fetch('../buscar_horarios.php', { // CAMINHO CORRIGIDO
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
