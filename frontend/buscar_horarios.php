@@ -1,14 +1,21 @@
-// Arquivo: /backend/buscar_horarios.php
-
 <?php
 // Define o cabeçalho para retornar JSON
+// --- LINHAS DE DEBUG ATIVADAS ---
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
-// ----------------------------------------------------
+// ------------------------------------
 
-// Corrigido na última etapa:
+// 1. Caminho de conexão corrigido (subindo um nível para /backend/)
 require_once "../backend/conexao.php"; 
+
+// 2. Verificação de Escopo do $pdo: Garante que a variável de conexão existe
+if (!isset($pdo) || !$pdo) {
+    http_response_code(500);
+    echo json_encode(['error' => 'ERRO FATAL: Variável de conexão $pdo não está acessível.']);
+    exit();
+}
+// ------------------------------------
 
 header('Content-Type: application/json');
 
@@ -46,14 +53,13 @@ try {
     }
 
     // 3. Consultar horários disponíveis
-    // NOTA: Requer que você tenha a tabela 'disponibilidade_dentista'
     $sql = "
         SELECT 
             dd.horario
         FROM 
             disponibilidade_dentista dd
         LEFT JOIN 
-            Consulta c ON dd.usuario_id = c.usuario_dentista 
+            consulta c ON dd.usuario_id = c.usuario_dentista  -- CORREÇÃO: 'consulta' em minúsculo
                         AND dd.horario = c.hora              
                         AND c.data = :data_consulta
         WHERE 
@@ -80,9 +86,11 @@ try {
     }
 
 } catch (PDOException $e) {
+    // Captura erros SQL (Ex: coluna não encontrada)
     http_response_code(500);
-    echo json_encode(['error' => 'Erro interno do servidor ao buscar horários: ' . $e->getMessage()]);
+    echo json_encode(['error' => 'Erro interno do servidor (PDO): ' . $e->getMessage()]);
 } catch (Exception $e) {
+    // Captura erros gerais
     http_response_code(500);
     echo json_encode(['error' => 'Erro: ' . $e->getMessage()]);
 }
