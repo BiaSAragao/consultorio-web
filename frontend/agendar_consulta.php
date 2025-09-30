@@ -348,6 +348,10 @@ include 'templates/header.php';
     }
 </style>
 
+<script>
+    const horariosDisponiveis = <?= json_encode($horarios_html_array ?? []) ?>;
+</script>
+
 <script src="js/agendamento.js"></script>
 
 
