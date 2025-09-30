@@ -16,11 +16,11 @@ if ($_SERVER["REQUEST_METHOD"] !== "POST") {
 try {
     // 1. COLETA E NORMALIZAÇÃO DOS DADOS
     $data = $_POST["data"] ?? null; 
-    $hora = $_POST["horario"] ?? null; // CORRIGIDO: Usa 'horario'
+    $hora = $_POST["horario_selecionado"] ?? null; // ajustado
     $servicos = $_POST["servicos"] ?? [];
     
-    // CAPTURA O ID DO DENTISTA DO FORMULÁRIO
-    $usuario_dentista = $_POST["dentista_selecionado"] ?? null; 
+    // Captura o dentista (fixo) do formulário
+    $usuario_dentista = $_POST["dentista"] ?? null; // ajustado
     
     // Dados adicionais
     $observacoes = $_POST["observacoes"] ?? '';
@@ -35,8 +35,7 @@ try {
         exit;
     }
 
-
-    // 2. VERIFICAÇÃO DE DISPONIBILIDADE (CRÍTICO)
+    // 2. VERIFICAÇÃO DE DISPONIBILIDADE
     $stmt_check = $pdo->prepare("
         SELECT COUNT(*) 
         FROM consulta 
@@ -103,8 +102,6 @@ try {
     if ($pdo->inTransaction()) {
         $pdo->rollBack();
     }
-    // Para debug:
-    // echo "Erro: " . $e->getMessage(); exit;
     header("Location: ../frontend/agendar_consulta.php?msg=Ocorreu um erro ao agendar a consulta.");
     exit;
 }

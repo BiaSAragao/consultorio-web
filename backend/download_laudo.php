@@ -4,8 +4,8 @@
 session_start();
 require 'conexao.php';
 
-$diretorio_uploads = '../uploads/laudos/'; 
-$caminho_completo = __DIR__ . '/' . $diretorio_uploads;
+$raiz_projeto = dirname(__DIR__); 
+$caminho_completo = $raiz_projeto . '/uploads/laudos/';
 
 // 1. VERIFICAÇÃO DE ACESSO
 if (!isset($_SESSION['usuario_id']) || $_SESSION['tipo_usuario'] !== 'dentista') {
