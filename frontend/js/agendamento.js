@@ -1,7 +1,5 @@
 // Arquivo: /frontend/js/agendamento.js
 
-// --- LÓGICA PARA O FORMULÁRIO DE AGENDAMENTO EM PASSOS ---
-
 document.addEventListener('DOMContentLoaded', () => {
     
     // Elementos do formulário
@@ -11,15 +9,26 @@ document.addEventListener('DOMContentLoaded', () => {
     const inputData = document.getElementById('data');
     const inputHorarioSelecionado = document.getElementById('horario_selecionado');
     const inputServicosValidacao = document.getElementById('servicos_validacao');
+    
+    const obsTextarea = document.getElementById('observacoes');
+    const historicoTextarea = document.getElementById('historico');
+    const alergiasTextarea = document.getElementById('alergias');
 
-    // Variável de controle para garantir que todos os serviços são do mesmo DENTISTA
-    let dentistaAtualSelecionado = null;
-
+    // Variável de controle para o dentista
+    let dentistaAtualSelecionado = inputDentistaSelecionado.value || null;
+    
     // --- FUNÇÃO PARA LIGAR OS EVENTOS DE CLIQUE DOS HORÁRIOS ---
-    // Necessário para horários renderizados pelo PHP na recarga da página
     function ligarEventosHorarios() {
+        // Pega o valor do horário que veio na URL para pré-selecionar
+        const horarioGet = inputHorarioSelecionado.value; 
+
         document.querySelectorAll('.horario-item').forEach(btnHorario => {
-            // Verifica se o horário já foi ligado para evitar duplicação
+            // Pré-seleciona se o valor da URL for igual ao horário do botão
+            if (horarioGet && btnHorario.dataset.horario === horarioGet) {
+                 btnHorario.classList.add('selected');
+            }
+
+            // Liga o evento de clique uma única vez
             if (btnHorario.dataset.listener !== 'true') {
                 btnHorario.addEventListener('click', function() {
                     document.querySelectorAll('.horario-item.selected').forEach(btn => btn.classList.remove('selected'));
@@ -31,18 +40,38 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // LIGA OS EVENTOS DE HORÁRIO APÓS O DOM CARREGAR
-    ligarEventosHorarios();
-    
-    // --- LÓGICA DE NAVEGAÇÃO INICIAL (APÓS RECARREGAMENTO) ---
-    const hash = window.location.hash;
-    if (hash.startsWith('#passo-')) {
-        const passoNum = parseInt(hash.replace('#passo-', ''));
-        if (!isNaN(passoNum)) {
-            irParaPasso(passoNum);
+    // --- FUNÇÃO PARA INICIALIZAR ESTADO DO FORMULÁRIO (Pré-preenchimento) ---
+    function inicializarEstadoFormulario() {
+        const servicosMarcados = Array.from(checkboxesServicos).filter(cb => cb.checked);
+        
+        if (servicosMarcados.length > 0) {
+            const primeiroServico = servicosMarcados[0];
+            const nomeDentista = primeiroServico.dataset.dentistaNome;
+            const dentistaId = primeiroServico.dataset.dentistaId;
+            
+            // Atualiza o estado visual e variáveis
+            dentistaAtualSelecionado = dentistaId; 
+            inputDentistaSelecionado.value = dentistaId;
+            dentistaInfoP.innerHTML = `Profissional Escolhido: Dr(a). **${nomeDentista}**`;
+            inputServicosValidacao.value = 'selecionado';
+
+            // Verifica se deve avançar o passo
+            const hash = window.location.hash;
+            if (hash.startsWith('#passo-')) {
+                const passoNum = parseInt(hash.replace('#passo-', ''));
+                if (!isNaN(passoNum)) {
+                    irParaPasso(passoNum);
+                }
+            } else {
+                irParaPasso(1);
+            }
+        } else {
+             // Garante que o passo 1 é exibido se nada estiver selecionado
+            irParaPasso(1); 
         }
-    } else {
-        irParaPasso(1);
+
+        // Liga os listeners dos botões de horário, incluindo a pré-seleção
+        ligarEventosHorarios();
     }
     
     // --- EVENTO DE SELEÇÃO DE SERVIÇO ---
@@ -68,31 +97,50 @@ document.addEventListener('DOMContentLoaded', () => {
                 dentistaAtualSelecionado = servicosMarcados[0].dataset.dentistaId;
             }
 
-            // 2. Atualizar o estado do formulário
+            // 2. Atualizar o estado do formulário e recarregar se necessário
             if (servicosMarcados.length === 0) {
                 inputDentistaSelecionado.value = '';
                 dentistaInfoP.innerHTML = '**Selecione um serviço para ver o profissional responsável.**';
                 inputHorarioSelecionado.value = '';
                 inputServicosValidacao.value = '';
-                // Quando o dentista muda ou é desmarcado, a página deve ser recarregada
+                // Recarrega sem dados (apenas para limpar a URL)
                 window.location.href = `agendar_consulta.php#passo-1`; 
             } else {
                 inputDentistaSelecionado.value = dentistaAtualSelecionado;
-                dentistaInfoP.innerHTML = `Profissional Escolhido: Dr(a). **${nomeDentista}**`;
-                inputServicosValidacao.value = 'selecionado';
-
+                
                 // Se o dentista mudar e a data já estiver preenchida, força a recarga para buscar novos horários
                 if (inputData.value) {
                     const data = inputData.value;
                     const dentistaId = dentistaAtualSelecionado;
-                    // Redireciona para buscar horários do novo dentista
-                    window.location.href = `agendar_consulta.php?dentista_id=${dentistaId}&data=${data}#passo-2`;
+                    
+                    // COLETAR TODOS OS DADOS NOVAMENTE PARA RECARGA
+                    const servicosSelecionados = servicosMarcados
+                        .map(cb => `servicos[]=${cb.value}`)
+                        .join('&');
+
+                    // Coletar campos adicionais, se houver
+                    const obs = obsTextarea?.value;
+                    const historico = historicoTextarea?.value;
+                    const alergias = alergiasTextarea?.value;
+
+                    let url = `agendar_consulta.php?dentista_id=${dentistaId}&data=${data}&${servicosSelecionados}`;
+
+                    if (obs) url += `&observacoes=${encodeURIComponent(obs)}`;
+                    if (historico) url += `&historico=${encodeURIComponent(historico)}`;
+                    if (alergias) url += `&alergias=${encodeURIComponent(alergias)}`;
+                    
+                    url += `#passo-2`;
+                    
+                    window.location.href = url;
+                } else {
+                     // Apenas atualiza o nome do dentista no Passo 1
+                    dentistaInfoP.innerHTML = `Profissional Escolhido: Dr(a). **${nomeDentista}**`;
                 }
             }
         });
     });
 
-    // --- EVENTO DE SELEÇÃO DE DATA (AGORA RECARREGA A PÁGINA) ---
+    // --- EVENTO DE SELEÇÃO DE DATA (AGORA RECARREGA A PÁGINA COM TODOS OS DADOS) ---
     if(inputData) {
         inputData.addEventListener('change', function() {
             // ... (Verificação de data passada mantida)
@@ -110,27 +158,44 @@ document.addEventListener('DOMContentLoaded', () => {
             const dentistaId = inputDentistaSelecionado.value;
 
             if (data && dentistaId) {
-                // 1. COLETAR IDs dos SERVIÇOS SELECIONADOS
+                // 1. COLETAR IDS dos SERVIÇOS SELECIONADOS
                 const servicosSelecionados = Array.from(checkboxesServicos)
                     .filter(cb => cb.checked)
-                    .map(cb => `servicos[]=${cb.value}`) // Formata como 'servicos[]=ID'
-                    .join('&'); // Junta todos os parâmetros com '&'
+                    .map(cb => `servicos[]=${cb.value}`)
+                    .join('&');
 
-                // 2. REDIRECIONAR INCLUINDO DENTISTA, DATA E SERVIÇOS
+                // **COLETAR CAMPOS ADICIONAIS (REABASTECIMENTO)**
+                const obs = obsTextarea?.value;
+                const historico = historicoTextarea?.value;
+                const alergias = alergiasTextarea?.value;
+                
+                // 2. MONTAR A URL COM TODOS OS PARÂMETROS
                 let url = `agendar_consulta.php?dentista_id=${dentistaId}&data=${data}`;
+
+                // Adiciona os serviços
                 if (servicosSelecionados) {
                     url += `&${servicosSelecionados}`;
                 }
+                
+                // Adiciona os campos adicionais SE estiverem preenchidos
+                if (obs) url += `&observacoes=${encodeURIComponent(obs)}`;
+                if (historico) url += `&historico=${encodeURIComponent(historico)}`;
+                if (alergias) url += `&alergias=${encodeURIComponent(alergias)}`;
+                
+                // Adiciona a âncora para ir ao passo 2
                 url += `#passo-2`;
                 
                 window.location.href = url;
                 
             } else {
                 alert('Selecione um serviço e o dentista no Passo 1 antes de escolher a data.');
+                this.value = '';
             }
         });
     }
-    // A função buscarHorarios FOI REMOVIDA
+
+    // Chama a função de inicialização para definir o estado inicial após o DOM carregar
+    inicializarEstadoFormulario(); 
 });
 
 // --- FUNÇÕES DE NAVEGAÇÃO DE PASSOS (Mantidas) ---

@@ -14,7 +14,7 @@ $usuario_nome = $_SESSION['usuario_nome'];
 $titulo_pagina = 'Agendar Consulta - SmileUp';
 $is_dashboard = false;
 
-// 1. Função para buscar serviços e categorias (CORRIGIDA)
+// 1. Função para buscar serviços e categorias
 function buscarServicosECategorias($pdo) {
     $stmt = $pdo->query("
         SELECT 
@@ -24,15 +24,15 @@ function buscarServicosECategorias($pdo) {
             s.preco,
             c.nome AS nome_categoria,
             c.categoria_id,
-            d.usuario_id AS dentista_id,      -- ID do dentista
-            u.nome AS nome_dentista,          -- Nome do dentista
+            d.usuario_id AS dentista_id, 
+            u.nome AS nome_dentista, 
             d.cro
         FROM 
             Servico s
         JOIN 
             Categoria c ON s.categoria_id = c.categoria_id
         JOIN
-            Dentista d ON c.dentista_id = d.usuario_id   -- JUNÇÃO CORRETA: Categoria tem o ID do Dentista
+            Dentista d ON c.dentista_id = d.usuario_id 
         JOIN
             Usuario u ON d.usuario_id = u.usuario_id
         ORDER BY
@@ -41,6 +41,7 @@ function buscarServicosECategorias($pdo) {
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
+// 2. Função para buscar horários disponíveis
 function buscarHorariosHTML($pdo, $dentista_id, $data_consulta) {
     
     $timestamp = strtotime($data_consulta);
@@ -58,7 +59,6 @@ function buscarHorariosHTML($pdo, $dentista_id, $data_consulta) {
     }
 
     try {
-        // CORREÇÃO FINAL DA QUERY: 'consulta' em minúsculo.
         $sql = "
             SELECT 
                 dd.horario
@@ -66,7 +66,7 @@ function buscarHorariosHTML($pdo, $dentista_id, $data_consulta) {
                 disponibilidade_dentista dd
             LEFT JOIN 
                 consulta c ON dd.usuario_id = c.usuario_dentista 
-                            AND dd.horario = c.hora             
+                            AND dd.horario = c.hora             
                             AND c.data = :data_consulta
             WHERE 
                 dd.usuario_id = :dentista_id 
@@ -103,19 +103,30 @@ function buscarHorariosHTML($pdo, $dentista_id, $data_consulta) {
 }
 // ----------------------------------------------------------------------------------
 
-// NOVO CÓDIGO DE TRATAMENTO DE URL (COLOQUE ANTES DO HTML, APÓS AS FUNÇÕES PHP)
+// 3. TRATAMENTO DE VARIÁVEIS DA URL (REABASTECIMENTO)
 
 $horarios_html = '<p>Selecione uma data para ver os horários disponíveis.</p>';
+
+// Coleta dados essenciais para busca
 $data_selecionada = $_GET['data'] ?? '';
 $dentista_selecionado = $_GET['dentista_id'] ?? '';
-// NOVO: Coleta os IDs dos serviços da URL. Se não vier nada, será um array vazio.
+// Coleta os IDs dos serviços da URL (Para pré-marcação)
 $servicos_selecionados_get = $_GET['servicos'] ?? [];
 
+// Coleta dados do Passo 3 (Para preenchimento dos textareas)
+$horario_selecionado_get = $_GET['horario'] ?? '';
+$obs_selecionada = $_GET['observacoes'] ?? '';
+$historico_selecionado = $_GET['historico'] ?? '';
+$alergias_selecionadas = $_GET['alergias'] ?? '';
+
+
 if (!empty($data_selecionada) && !empty($dentista_selecionado)) {
+    // Se data e dentista vierem na URL, busca os horários
     $horarios_html = buscarHorariosHTML($pdo, $dentista_selecionado, $data_selecionada);
 }
 
-// 2. OBTENDO DADOS DO BANCO PARA O FORMULÁRIO
+
+// 4. OBTENDO DADOS DO BANCO PARA O FORMULÁRIO
 $servicosECategorias = buscarServicosECategorias($pdo);
 
 // Carrega cabeçalho e menu
@@ -135,13 +146,19 @@ include 'templates/header.php';
 
         <form action="../backend/processa_consulta.php" method="POST" id="form-agendamento">
             
-            <input type="hidden" name="dentista" id="dentista_selecionado" value="" required data-error-message="O dentista deve ser selecionado após a escolha do serviço.">
+            <input type="hidden" name="dentista" id="dentista_selecionado" 
+                value="<?php echo htmlspecialchars($dentista_selecionado); ?>" 
+                required data-error-message="O dentista deve ser selecionado após a escolha do serviço.">
 
             <div id="passo-1" class="passo-agendamento">
                 
+                <h3 class="subsection-title">Passo 1: Seleção de Serviço</h3>
+
                 <div class="form-group">
                     <label>Selecione os serviços que deseja agendar (Você pode selecionar mais de um, mas devem ser do **mesmo profissional**):</label>
-                    <input type="hidden" name="servicos_validacao" id="servicos_validacao" required data-error-message="Selecione ao menos um serviço para continuar.">
+                    <input type="hidden" name="servicos_validacao" id="servicos_validacao" 
+                        value="<?php echo !empty($servicos_selecionados_get) ? 'selecionado' : ''; ?>"
+                        required data-error-message="Selecione ao menos um serviço para continuar.">
                     
                     <div class="servicos-list">
                         <?php 
@@ -154,7 +171,13 @@ include 'templates/header.php';
                                 $categoria_atual = $servico['nome_categoria']; ?>
                                 <fieldset class="fieldset-servico">
                                     <legend><strong><?php echo htmlspecialchars($categoria_atual); ?></strong></legend>
-                            <?php endif; ?>
+                            <?php endif; 
+                            
+                            // Lógica de Pré-Marcação (Reabastecimento)
+                            $servico_id_str = (string)$servico['servico_id'];
+                            $checked = in_array($servico_id_str, $servicos_selecionados_get) ? 'checked' : '';
+                            
+                            ?>
                             <div class="servico-item">
                                 <input type="checkbox" 
                                        id="servico_<?php echo $servico['servico_id']; ?>" 
@@ -163,7 +186,8 @@ include 'templates/header.php';
                                        data-preco="<?php echo $servico['preco']; ?>"
                                        data-categoria-id="<?php echo $servico['categoria_id']; ?>" 
                                        data-dentista-id="<?php echo $servico['dentista_id']; ?>"
-                                       data-dentista-nome="<?php echo htmlspecialchars($servico['nome_dentista']); ?>">
+                                       data-dentista-nome="<?php echo htmlspecialchars($servico['nome_dentista']); ?>"
+                                       <?= $checked ?>>
                                 <label for="servico_<?php echo $servico['servico_id']; ?>">
                                     <?php echo htmlspecialchars($servico['nome_servico']); ?> 
                                     (Com Dr(a). <?php echo htmlspecialchars($servico['nome_dentista']); ?> - R$ <?php echo number_format($servico['preco'], 2, ',', '.'); ?>)
@@ -187,7 +211,7 @@ include 'templates/header.php';
             </div>
 
             <div id="passo-2" class="passo-agendamento" style="display: none;">
-                <h3 class="subsection-title">Escolha a Data e Horário</h3>
+                <h3 class="subsection-title">Passo 2: Escolha a Data e Horário</h3>
                 <div class="form-grid">
                     <div class="form-group">
                         <label for="data">Data Desejada:</label>
@@ -202,7 +226,9 @@ include 'templates/header.php';
                         </div>
                     </div>
 
-                    <input type="hidden" id="horario_selecionado" name="horario" required>
+                    <input type="hidden" id="horario_selecionado" name="horario" 
+                        value="<?php echo htmlspecialchars($horario_selecionado_get); ?>"
+                        required data-error-message="Selecione um horário disponível.">
                 </div>
 
                 <div class="botoes-navegacao">
@@ -212,21 +238,21 @@ include 'templates/header.php';
             </div>
 
             <div id="passo-3" class="passo-agendamento" style="display: none;">
-                <h3 class="subsection-title">Informações Adicionais (Opcional)</h3>
+                <h3 class="subsection-title">Passo 3: Informações Adicionais</h3>
                 <div class="form-group">
                     <label for="observacoes">Observações sobre a Consulta:</label>
-                    <textarea id="observacoes" name="observacoes" placeholder="Ex: Preferência por anestesia local, dúvidas sobre o procedimento."></textarea>
+                    <textarea id="observacoes" name="observacoes" placeholder="Ex: Preferência por anestesia local, dúvidas sobre o procedimento."><?php echo htmlspecialchars($obs_selecionada); ?></textarea>
                 </div>
 
                 <h3 class="subsection-title" style="margin-top: 2rem;">Seu Histórico de Saúde (Opcional)</h3>
                 <div class="form-grid">
                     <div class="form-group">
                         <label for="historico">Histórico Odontológico/Médico:</label>
-                        <textarea id="historico" name="historico" placeholder="Informe condições médicas relevantes, cirurgias recentes, ou tratamentos odontológicos anteriores."></textarea>
+                        <textarea id="historico" name="historico" placeholder="Informe condições médicas relevantes, cirurgias recentes, ou tratamentos odontológicos anteriores."><?php echo htmlspecialchars($historico_selecionado); ?></textarea>
                     </div>
                     <div class="form-group">
                         <label for="alergias">Alergias Conhecidas:</label>
-                        <textarea id="alergias" name="alergias" placeholder="Informe alergias a medicamentos, látex, etc."></textarea>
+                        <textarea id="alergias" name="alergias" placeholder="Informe alergias a medicamentos, látex, etc."><?php echo htmlspecialchars($alergias_selecionadas); ?></textarea>
                     </div>
                 </div>
                 
@@ -250,7 +276,7 @@ include 'templates/header.php';
         margin-top: 2rem;
     }
 
-    .horarios-disponiveis {
+    .horarios-grid {
         display: flex;
         flex-wrap: wrap;
         gap: 0.5rem;
@@ -324,7 +350,6 @@ include 'templates/header.php';
         color: #333;
     }
 </style>
-
 
 <script src="js/agendamento.js"></script>
 
