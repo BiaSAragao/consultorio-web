@@ -110,7 +110,7 @@ include 'templates/header.php';
 <form method="POST" id="form-editar">
     <input type="hidden" name="dentista" id="dentista_selecionado" value="">
 
-    <!-- PASSO 1: Serviços -->
+  
     <div id="passo-1" class="passo-agendamento">
         <div class="form-group">
             <label>Selecione os serviços que deseja agendar (apenas do mesmo profissional):</label>
@@ -160,7 +160,7 @@ include 'templates/header.php';
         </div>
     </div>
 
-    <!-- PASSO 2: Data e Horário -->
+   
     <div id="passo-2" class="passo-agendamento" style="display: none;">
         <h3 class="subsection-title">Escolha a Data e Horário</h3>
         <div class="form-grid">
@@ -188,7 +188,7 @@ include 'templates/header.php';
         </div>
     </div>
 
-    <!-- PASSO 3: Observações -->
+
     <div id="passo-3" class="passo-agendamento" style="display: none;">
         <h3 class="subsection-title">Informações Adicionais (Opcional)</h3>
         <div class="form-group">
