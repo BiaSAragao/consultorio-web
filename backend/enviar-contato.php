@@ -1,9 +1,12 @@
 <?php
 session_start();
 
+require 'src/PHPMailer.php';
+require 'src/SMTP.php';
+require 'src/Exception.php';
+
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
-use PHPMailer\PHPMailer\SMTP;
 
 // Verifica se o formulário foi enviado
 if ($_SERVER['REQUEST_METHOD'] != 'POST') {
@@ -11,12 +14,22 @@ if ($_SERVER['REQUEST_METHOD'] != 'POST') {
     exit();
 }
 
-// Carrega o autoloader do Composer (verifique se a pasta 'vendor' está na raiz do projeto)
-require '../vendor/autoload.php';
+// Recebe os dados do formulário
+$nome = trim($_POST['nome']);
+$email = trim($_POST['email']);
+$assunto = trim($_POST['assunto']);
+$mensagem = trim($_POST['mensagem']);
 
-// Validação simples dos campos
-if (empty($_POST['nome']) || empty($_POST['email']) || empty($_POST['assunto']) || empty($_POST['mensagem'])) {
+// Validação simples
+if (empty($nome) || empty($email) || empty($assunto) || empty($mensagem)) {
     $_SESSION['mensagem_erro'] = "Por favor, preencha todos os campos.";
+    header("Location: ../frontend/contato.php");
+    exit();
+}
+
+// Validação de e-mail
+if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+    $_SESSION['mensagem_erro'] = "E-mail inválido.";
     header("Location: ../frontend/contato.php");
     exit();
 }
@@ -24,54 +37,43 @@ if (empty($_POST['nome']) || empty($_POST['email']) || empty($_POST['assunto']) 
 $mail = new PHPMailer(true);
 
 try {
-    // ===================================================================
-    // == PREENCHA AS INFORMAÇÕES DO SEU E-MAIL AQUI ==
-    // ===================================================================
-
-    // --- Configurações do Servidor SMTP ---
+    // Configurações SMTP do Gmail
     $mail->isSMTP();
-    $mail->Host       = 'smtp.seuprovedor.com';    // <<< COLOQUE O SERVIDOR SMTP DO SEU E-MAIL AQUI (ex: smtp.gmail.com, smtp.umbler.com)
+    $mail->Host       = 'smtp.gmail.com';
     $mail->SMTPAuth   = true;
-    $mail->Username   = 'seu-email-criado@email.com'; // <<< O E-MAIL COMPLETO QUE VOCÊ CRIOU
-    $mail->Password   = 'a-senha-do-seu-email';    // <<< A SENHA DO E-MAIL QUE VOCÊ CRIOU
-    $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS; // Geralmente 'ssl'
-    $mail->Port       = 465;                         // Geralmente 465 para SSL ou 587 para TLS
+    $mail->Username   = 'consultorioweb25@gmail.com'; // seu e-mail
+    $mail->Password   = 'cozeahmbhpfilofm';           // senha de app
+    $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+    $mail->Port       = 465;
     $mail->CharSet    = 'UTF-8';
 
-    // --- Quem envia e quem recebe ---
-    // Remetente (DEVE ser o mesmo e-mail do Username acima)
-    $mail->setFrom('seu-email-criado@email.com', 'Contato do Site SmileUp');
-    
-    // Destinatário (o e-mail da clínica que vai receber a mensagem, PODE ser o mesmo que você criou)
-    $mail->addAddress('seu-email-criado@email.com', 'SmileUp Clínica');
+    // Quem envia
+    $mail->setFrom('consultorioweb25@gmail.com', 'Contato SmileUp');
 
-    // ===================================================================
-    // == FIM DA ÁREA DE CONFIGURAÇÃO ==
-    // ===================================================================
+    // Quem recebe
+    $mail->addAddress('consultorioweb25@gmail.com', 'SmileUp Clínica');
 
-    // O campo "Responder Para" será o e-mail da pessoa que preencheu o formulário
-    $mail->addReplyTo($_POST['email'], $_POST['nome']);
+    // Responder para o paciente
+    $mail->addReplyTo($email, $nome);
 
-    // --- Conteúdo do E-mail ---
+    // Conteúdo do e-mail
     $mail->isHTML(true);
-    $mail->Subject = 'Nova Mensagem do Site: ' . htmlspecialchars($_POST['assunto']);
-    $mail->Body    = "<h2>Nova mensagem recebida pelo formulário de contato:</h2>" .
-                     "<p><strong>Nome:</strong> " . htmlspecialchars($_POST['nome']) . "</p>" .
-                     "<p><strong>Email para resposta:</strong> " . htmlspecialchars($_POST['email']) . "</p>" .
-                     "<p><strong>Mensagem:</strong><br>" . nl2br(htmlspecialchars($_POST['mensagem'])) . "</p>";
+    $mail->Subject = 'Nova mensagem do site: ' . htmlspecialchars($assunto);
+    $mail->Body    = "
+        <h2>Nova mensagem recebida pelo formulário de contato:</h2>
+        <p><strong>Nome:</strong> " . htmlspecialchars($nome) . "</p>
+        <p><strong>Email para resposta:</strong> " . htmlspecialchars($email) . "</p>
+        <p><strong>Mensagem:</strong><br>" . nl2br(htmlspecialchars($mensagem)) . "</p>
+    ";
 
     $mail->send();
 
-    // Redireciona de volta com mensagem de sucesso
-    $_SESSION['mensagem_sucesso'] = 'Sua mensagem foi enviada com sucesso! Agradecemos o contato.';
+    $_SESSION['mensagem_sucesso'] = "Sua mensagem foi enviada com sucesso!";
     header("Location: ../frontend/contato.php");
     exit();
 
 } catch (Exception $e) {
-    // Redireciona de volta com mensagem de erro
-    // A linha abaixo é útil para depuração, para ver qual foi o erro exato
-    // $_SESSION['mensagem_erro'] = "A mensagem não pôde ser enviada. Erro: {$mail->ErrorInfo}";
-    $_SESSION['mensagem_erro'] = "A mensagem não pôde ser enviada. Por favor, tente novamente mais tarde.";
+    $_SESSION['mensagem_erro'] = "A mensagem não pôde ser enviada. Erro: " . $mail->ErrorInfo;
     header("Location: ../frontend/contato.php");
     exit();
 }
