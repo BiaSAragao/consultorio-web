@@ -20,6 +20,8 @@ $erro_db = null;
 $id_paciente = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
 
 if (!$id_paciente) {
+    // Inclui cabeçalho e rodape para garantir a estrutura
+    include '../frontend/templates/header.php';
     echo "<main class='main-container'><p class='section-container'>Erro: ID do paciente não fornecido ou inválido.</p></main>";
     include '../frontend/templates/footer.php';
     exit(); 
@@ -28,6 +30,9 @@ if (!$id_paciente) {
 // ===================================================================
 // LÓGICA DO BANCO DE DADOS
 // ===================================================================
+
+// Inicializa a variável para evitar erro no cálculo da idade caso falhe
+$dados_paciente = []; 
 
 try {
     // A. DADOS PESSOAIS DO PACIENTE
@@ -46,21 +51,25 @@ try {
 
     // Se o paciente não foi encontrado no banco, $dados_paciente estaria vazio
     if (!$dados_paciente) {
+        // Inclui cabeçalho e rodape para garantir a estrutura
+        include '../frontend/templates/header.php';
         echo "<main class='main-container'><p class='section-container'>Paciente com ID $id_paciente não encontrado ou não é um paciente.</p></main>";
         include '../frontend/templates/footer.php';
         exit();
     }
     
-    // B. HISTÓRICO DE CONSULTAS
+    // B. HISTÓRICO DE CONSULTAS (CORRIGIDO PARA AGRUPAR SERVIÇOS)
     $sql_historico = "
         SELECT 
             c.data, 
             c.status,
-            s.nome_servico AS procedimento
+            -- Agrupa todos os nomes de serviço em uma única string, separados por vírgula
+            GROUP_CONCAT(s.nome_servico SEPARATOR ', ') AS procedimentos 
         FROM Consulta c
         JOIN Consulta_Servico cs ON c.consulta_id = cs.consulta_id
         JOIN Servico s ON cs.servico_id = s.servico_id
         WHERE c.usuario_paciente = :id_paciente
+        GROUP BY c.consulta_id, c.data, c.status -- Agrupa pela consulta para evitar linhas duplicadas
         ORDER BY c.data DESC
     ";
     $stmt_historico = $pdo->prepare($sql_historico);
@@ -73,7 +82,7 @@ try {
             documento_id AS id_laudo, 
             nome_arquivo_original, 
             data_upload
-        FROM Documento -- Substitua 'Documento' pelo nome real da sua tabela de laudos/arquivos
+        FROM Documento 
         WHERE usuario_paciente = :id_paciente
         ORDER BY data_upload DESC
     ";
@@ -83,14 +92,19 @@ try {
 
 
 } catch (PDOException $e) {
+    // Se ocorrer um erro PDO, define a mensagem de erro e garante que $dados_paciente está vazio para evitar erros posteriores
     $erro_db = "Erro de comunicação com o sistema ao carregar a ficha. Por favor, tente novamente.";
+    $dados_paciente = []; 
 }
 
 
-// 3. Lógica para calcular a idade
-$nascimento = new DateTime($dados_paciente['data_nascimento']);
-$hoje = new DateTime();
-$idade = $nascimento->diff($hoje)->y;
+// 3. Lógica para calcular a idade (Apenas se houver dados do paciente)
+$idade = 'N/A';
+if (!empty($dados_paciente['data_nascimento'])) {
+    $nascimento = new DateTime($dados_paciente['data_nascimento']);
+    $hoje = new DateTime();
+    $idade = $nascimento->diff($hoje)->y;
+}
 // --- FIM DA LÓGICA DO BACKEND ---
 
 include '../frontend/templates/header.php';
@@ -105,13 +119,13 @@ include '../frontend/templates/header.php';
     <?php endif; ?>
 
     <section id="dados-pessoais" class="section-container">
-        <h2 class="section-title">Ficha Completa de - <?php echo htmlspecialchars($dados_paciente['nome']); ?></h2>
+        <h2 class="section-title">Ficha Completa de - <?php echo htmlspecialchars($dados_paciente['nome'] ?? 'Erro ao carregar nome'); ?></h2>
         <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
-            <p><strong>Telefone:</strong> <?php echo htmlspecialchars($dados_paciente['telefone']); ?></p>
-            <p><strong>Email:</strong> <?php echo htmlspecialchars($dados_paciente['email']); ?></p>
-            <p><strong>CPF:</strong> <?php echo htmlspecialchars($dados_paciente['cpf']); ?></p>
+            <p><strong>Telefone:</strong> <?php echo htmlspecialchars($dados_paciente['telefone'] ?? 'N/A'); ?></p>
+            <p><strong>Email:</strong> <?php echo htmlspecialchars($dados_paciente['email'] ?? 'N/A'); ?></p>
+            <p><strong>CPF:</strong> <?php echo htmlspecialchars($dados_paciente['cpf'] ?? 'N/A'); ?></p>
             <p><strong>Plano de Saúde:</strong> <?php echo htmlspecialchars($dados_paciente['plano_saude'] ?? 'N/A'); ?></p>
-            <p><strong>Data Nasc.:</strong> <?php echo date('d/m/Y', strtotime($dados_paciente['data_nascimento'])); ?></p>
+            <p><strong>Data Nasc.:</strong> <?php echo (isset($dados_paciente['data_nascimento'])) ? date('d/m/Y', strtotime($dados_paciente['data_nascimento'])) : 'N/A'; ?></p>
             <p><strong>Idade:</strong> <?php echo $idade; ?> anos</p>
         </div>
     </section>
@@ -119,7 +133,7 @@ include '../frontend/templates/header.php';
     <section id="historico-consultas" class="section-container">
         <h3 class="section-title">Histórico de Consultas</h3>
         <table class="tabela-consultas">
-            <thead><tr><th>Data</th><th>Procedimento</th><th>Status</th></tr></thead>
+            <thead><tr><th>Data</th><th>Procedimento(s)</th><th>Status</th></tr></thead>
             <tbody>
                 <?php if (empty($historico_consultas)): ?>
                     <tr><td colspan="3" style="text-align: center;">Nenhuma consulta registrada.</td></tr>
@@ -127,8 +141,7 @@ include '../frontend/templates/header.php';
                     <?php foreach ($historico_consultas as $consulta): ?>
                     <tr>
                         <td><?php echo date('d/m/Y', strtotime($consulta['data'])); ?></td>
-                        <td><?php echo htmlspecialchars($consulta['procedimento']); ?></td>
-                        <td><?php echo htmlspecialchars(ucfirst($consulta['status'])); ?></td>
+                        <td><?php echo htmlspecialchars($consulta['procedimentos']); ?></td> <td><?php echo htmlspecialchars(ucfirst($consulta['status'])); ?></td>
                     </tr>
                     <?php endforeach; ?>
                 <?php endif; ?>

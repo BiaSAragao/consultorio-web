@@ -48,6 +48,7 @@
                         <li><a href="dashboard-paciente.php#consultas" class="nav-link">Minhas Consultas</a></li>
                         <li><a href="agendar_consulta.php" class="nav-link">Agendar</a></li>
                         <li><a href="dashboard-paciente.php#laudos" class="nav-link">Meus Laudos</a></li>
+                        <li><a href="perfil-paciente.php" class="nav-link">Ver Perfil</a></li>
                         <li><a href=" " class="nav-link">Olá, <?php echo htmlspecialchars(explode(' ', $nome_usuario)[0]); ?>!</a></li>
                         <li><a href="../backend/logout.php" class="nav-link btn-secondary" style="padding: 0.5rem 1rem; border-radius: 9999px;">Sair</a></li>
 
