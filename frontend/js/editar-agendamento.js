@@ -1,119 +1,101 @@
-// Espera o documento carregar completamente
 document.addEventListener('DOMContentLoaded', () => {
-    
-    // Pega os elementos do formulário
-    const inputDentistaId = document.getElementById('dentista');
-    const inputData = document.getElementById('data');
+    const checkboxesServicos = document.querySelectorAll('input[name="servicos[]"]');
+    const inputDentistaSelecionado = document.getElementById('dentista_selecionado');
+    const dentistaInfoP = document.getElementById('dentista_info'); 
     const inputHorarioSelecionado = document.getElementById('horario_selecionado');
-    
-    // Lógica inicial ao carregar a página
-    irParaPasso(1);
+    const inputServicosValidacao = document.getElementById('servicos_validacao');
 
-    // Se a página já carrega com uma data, busca os horários para ela
-    if (inputData && inputData.value) {
-        buscarHorarios(inputData.value, inputDentistaId.value);
+    let dentistaAtualSelecionado = null;
 
-        // Pequeno atraso para garantir que os botões de horário foram criados antes de tentar selecionar um
-        setTimeout(() => {
-            const horarioAtual = inputHorarioSelecionado.value;
-            const divHorarios = document.getElementById('lista-horarios');
-            const btns = divHorarios.querySelectorAll('.horario-item');
-
-            btns.forEach(btn => {
-                if (btn.dataset.horario === horarioAtual) {
-                    btn.classList.add('selected');
-                }
-            });
-        }, 100); // 100ms de atraso é geralmente suficiente
-    }
-
-    // Adiciona o Event Listener para o campo de data
-    if(inputData) {
-        inputData.addEventListener('change', function() {
-            const dataSelecionada = new Date(this.value + "T00:00:00");
-            const hoje = new Date();
-            hoje.setHours(0, 0, 0, 0);
-
-            if (dataSelecionada < hoje) {
-                alert('Você não pode agendar para uma data passada.');
-                this.value = '';
-                document.getElementById('lista-horarios').innerHTML = '<p>Selecione uma data válida.</p>';
-                return;
-            }
-
-            if (this.value && inputDentistaId.value) {
-                buscarHorarios(this.value, inputDentistaId.value);
-            }
-        });
-    }
-});
-
-// As funções abaixo são idênticas às do arquivo agendamento.js
-// e são chamadas pelos botões no HTML.
-
-function irParaPasso(numeroPasso) {
-    document.querySelectorAll('.passo-agendamento').forEach(passo => passo.style.display = 'none');
-    const passoAtual = document.getElementById(`passo-${numeroPasso}`);
-    if(passoAtual) {
-        passoAtual.style.display = 'block';
-    }
-    window.scrollTo(0, 0);
-}
-
-function validarEPularPasso(passoAtual, proximoPasso) {
-    let valido = true;
-    if (passoAtual === 1) {
-        const checkboxesServicos = document.querySelectorAll('input[name="servicos[]"]');
-        const inputServicosValidacao = document.getElementById('servicos_validacao');
-        const servicosSelecionados = Array.from(checkboxesServicos).some(checkbox => checkbox.checked);
-        if (!servicosSelecionados) {
-            alert(inputServicosValidacao.dataset.errorMessage);
-            valido = false;
-        } else {
-            inputServicosValidacao.value = 'selecionado';
-        }
-    } else if (passoAtual === 2) {
-        const inputData = document.getElementById('data');
-        const inputHorarioSelecionado = document.getElementById('horario_selecionado');
-        if (!inputData.value || !inputHorarioSelecionado.value) {
-            alert('Selecione uma data e um horário disponível.');
-            valido = false;
-        }
-    }
-    if (valido) irParaPasso(proximoPasso);
-}
-
-function buscarHorarios(data, dentistaId) {
-    const divHorarios = document.getElementById('lista-horarios');
-    const inputHorarioSelecionado = document.getElementById('horario_selecionado');
-    inputHorarioSelecionado.value = '';
-
-    // Simulação de busca de horários
-    const hoje = new Date().toISOString().split('T')[0];
-    const amanha = new Date(new Date().getTime() + 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-    let horariosSimulados = [];
-
-    if (data === hoje) horariosSimulados = ["15:00", "16:00", "17:00"];
-    else if (data === amanha) horariosSimulados = ["08:00", "09:30", "11:00", "14:00", "15:30"];
-    else horariosSimulados = ["09:00", "10:00", "11:00", "14:00", "15:00", "16:00"];
-
-    divHorarios.innerHTML = '';
-    if (horariosSimulados.length === 0) {
-        divHorarios.innerHTML = '<p>Nenhum horário disponível para esta data.</p>';
-    } else {
-        horariosSimulados.forEach(horario => {
-            const btnHorario = document.createElement('button');
-            btnHorario.type = 'button';
-            btnHorario.className = 'horario-item';
-            btnHorario.textContent = horario;
-            btnHorario.dataset.horario = horario;
-
-            btnHorario.addEventListener('click', function() {
-                document.querySelectorAll('.horario-item.selected').forEach(btn => btn.classList.remove('selected'));
+    // --- Ativar clique nos horários ---
+    function inicializarHorarios() {
+        document.querySelectorAll('.horario-item').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.horario-item.selected').forEach(el => el.classList.remove('selected'));
                 this.classList.add('selected');
                 inputHorarioSelecionado.value = this.dataset.horario;
             });
-            divHorarios.appendChild(btnHorario);
         });
     }
-}
+
+    // --- Restringir serviços a um dentista ---
+    checkboxesServicos.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const dentistaId = this.dataset.dentistaId;
+            const nomeDentista = this.dataset.dentistaNome;
+            const servicosMarcados = Array.from(checkboxesServicos).filter(cb => cb.checked);
+
+            if (this.checked) {
+                if (dentistaAtualSelecionado === null) {
+                    dentistaAtualSelecionado = dentistaId;
+                } else if (dentistaAtualSelecionado !== dentistaId) {
+                    alert(`Você só pode agendar serviços do(a) mesmo(a) profissional.`);
+                    this.checked = false; 
+                    return; 
+                }
+            } else if (servicosMarcados.length === 0) {
+                dentistaAtualSelecionado = null;
+            } else {
+                dentistaAtualSelecionado = servicosMarcados[0].dataset.dentistaId;
+            }
+
+            if (servicosMarcados.length === 0) {
+                inputDentistaSelecionado.value = '';
+                dentistaInfoP.innerHTML = '**Selecione um serviço para ver o profissional responsável.**';
+                inputHorarioSelecionado.value = '';
+                inputServicosValidacao.value = '';
+            } else {
+                inputDentistaSelecionado.value = dentistaAtualSelecionado;
+                dentistaInfoP.innerHTML = `Profissional Escolhido: Dr(a). <strong>${nomeDentista}</strong>`;
+                inputServicosValidacao.value = 'selecionado';
+            }
+        });
+    });
+
+    // --- Navegação ---
+    window.irParaPasso = function(numeroPasso) {
+        document.querySelectorAll('.passo-agendamento').forEach(passo => passo.style.display = 'none');
+        const passoAtual = document.getElementById(`passo-${numeroPasso}`);
+        if (passoAtual) passoAtual.style.display = 'block';
+    };
+
+    window.validarEPularPasso = function(passoAtual, proximoPasso) {
+        let valido = true;
+
+        if (passoAtual === 1) {
+            if (inputServicosValidacao.value !== 'selecionado') {
+                alert(inputServicosValidacao.dataset.errorMessage);
+                valido = false;
+            } else if (!inputDentistaSelecionado.value) {
+                alert(document.getElementById('dentista_selecionado').dataset.errorMessage);
+                valido = false;
+            }
+        } else if (passoAtual === 2) {
+            const inputData = document.getElementById('data');
+            if (!inputData.value || !inputHorarioSelecionado.value) {
+                alert('Selecione uma data e um horário disponível.');
+                valido = false;
+            }
+        }
+
+        if (valido) irParaPasso(proximoPasso);
+    };
+
+    inicializarHorarios();
+
+    function inicializarServicosMarcados() {
+        const servicosMarcados = Array.from(checkboxesServicos).filter(cb => cb.checked);
+
+        if (servicosMarcados.length > 0) {
+            dentistaAtualSelecionado = servicosMarcados[0].dataset.dentistaId;
+            inputDentistaSelecionado.value = dentistaAtualSelecionado;
+            dentistaInfoP.innerHTML = `Profissional Escolhido: Dr(a). <strong>${servicosMarcados[0].dataset.dentistaNome}</strong>`;
+            inputServicosValidacao.value = 'selecionado';
+        }
+    }
+
+    // Rodar inicialização
+    inicializarHorarios();
+    inicializarServicosMarcados();
+
+});
