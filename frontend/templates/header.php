@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="css/home.css">
     
     <?php if (isset($is_dashboard) && $is_dashboard): ?>
-        <link rel="stylesheet" href="css/dashboard.css">
+        <link rel="stylesheet" href="/frontend/css/dashboard.css">
     <?php endif; ?>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -34,7 +34,7 @@
                     // --- MENU DO DENTISTA ---
                     if ($tipo_usuario === 'dentista'):
                 ?>
-                        <li><a href="dashboard-dentista.php#agenda-do-dia" class="nav-link">Minha Agenda</a></li>
+                        <li><a href="/dashboard-dentista.php#agenda-do-dia" class="nav-link">Minha Agenda</a></li>
                         <li><a href="dashboard-dentista.php#meus-horarios" class="nav-link">Gerenciar Horários</a></li>
                         <li><a href="meus-pacientes.php" class="nav-link">Meus Pacientes</a></li>
                         <li><a href="dashboard-dentista.php#estoque" class="nav-link">Estoque </a></li>
