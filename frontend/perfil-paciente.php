@@ -89,6 +89,8 @@ if (!$dados_usuario && !$erro) {
 
                 <a href="dashboard-paciente.php" class="botao-edicao">Voltar dashboard</a>
 
+                <a href="excluir_conta.php" class="botao-edicao">Excluir conta</a>
+
             <?php endif; ?>
         </div>
     </body>
