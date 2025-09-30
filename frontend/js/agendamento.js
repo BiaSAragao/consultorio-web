@@ -49,11 +49,14 @@ document.addEventListener('DOMContentLoaded', () => {
             const nomeDentista = primeiroServico.dataset.dentistaNome;
             const dentistaId = primeiroServico.dataset.dentistaId;
             
-            // Atualiza o estado visual e variáveis
+            // **CORREÇÃO CRÍTICA AQUI:**
+            // 1. Atualiza o valor do campo oculto de validação.
+            inputServicosValidacao.value = 'selecionado'; 
+            
+            // 2. Atualiza o estado visual e variáveis
             dentistaAtualSelecionado = dentistaId; 
             inputDentistaSelecionado.value = dentistaId;
             dentistaInfoP.innerHTML = `Profissional Escolhido: Dr(a). **${nomeDentista}**`;
-            inputServicosValidacao.value = 'selecionado';
 
             // Verifica se deve avançar o passo
             const hash = window.location.hash;
@@ -66,7 +69,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 irParaPasso(1);
             }
         } else {
-             // Garante que o passo 1 é exibido se nada estiver selecionado
+            // Garante que o passo 1 é exibido se nada estiver selecionado
+            inputServicosValidacao.value = ''; // Garante que a validação falhe se não houver serviços
             irParaPasso(1); 
         }
 
