@@ -1,9 +1,7 @@
 <?php
-// Carrega o arquivo de conexão com o banco de dados
 require_once "../backend/conexao.php";
 session_start();
 
-// Garante que só entra quem está logado E é paciente
 if (!isset($_SESSION["usuario_id"])) {
     header("Location: login.php");
     exit();
@@ -14,7 +12,7 @@ $usuario_nome = $_SESSION['usuario_nome'];
 $titulo_pagina = 'Agendar Consulta - SmileUp';
 $is_dashboard = false;
 
-// 1. Função para buscar serviços e categorias
+// 1. Buscar serviços e categorias
 function buscarServicosECategorias($pdo) {
     $stmt = $pdo->query("
         SELECT 
@@ -27,109 +25,46 @@ function buscarServicosECategorias($pdo) {
             d.usuario_id AS dentista_id, 
             u.nome AS nome_dentista, 
             d.cro
-        FROM 
-            Servico s
-        JOIN 
-            Categoria c ON s.categoria_id = c.categoria_id
-        JOIN
-            Dentista d ON c.dentista_id = d.usuario_id 
-        JOIN
-            Usuario u ON d.usuario_id = u.usuario_id
-        ORDER BY
-            c.nome, s.nome_servico
+        FROM Servico s
+        JOIN Categoria c ON s.categoria_id = c.categoria_id
+        JOIN Dentista d ON c.dentista_id = d.usuario_id 
+        JOIN Usuario u ON d.usuario_id = u.usuario_id
+        ORDER BY c.nome, s.nome_servico
     ");
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
-// 2. Função para buscar horários disponíveis
-function buscarHorariosHTML($pdo, $dentista_id, $data_consulta) {
-    
-    $timestamp = strtotime($data_consulta);
-    $dia_semana_en = strtolower(date('l', $timestamp)); 
-    
-    $dias_semana = [
-        'monday' => 'segunda', 'tuesday' => 'terca', 'wednesday' => 'quarta',
-        'thursday' => 'quinta', 'friday' => 'sexta',
-    ];
-
-    $dia_semana_db = $dias_semana[$dia_semana_en] ?? null;
-
-    if ($dia_semana_db === null) {
-        return '<p>O profissional não trabalha neste dia da semana.</p>';
-    }
-
-    try {
-        $sql = "
-            SELECT 
-                dd.horario
-            FROM 
-                disponibilidade_dentista dd
-            LEFT JOIN 
-                consulta c ON dd.usuario_id = c.usuario_dentista 
-                            AND dd.horario = c.hora             
-                            AND c.data = :data_consulta
-            WHERE 
-                dd.usuario_id = :dentista_id 
-                AND dd.dia_semana = :dia_semana_db
-                AND c.consulta_id IS NULL
-            ORDER BY
-                dd.horario ASC
-        ";
-
-        $stmt = $pdo->prepare($sql);
-        $stmt->bindParam(':dentista_id', $dentista_id, PDO::PARAM_INT);
-        $stmt->bindParam(':data_consulta', $data_consulta);
-        $stmt->bindParam(':dia_semana_db', $dia_semana_db);
-        $stmt->execute();
-        
-        $horarios_disponiveis = $stmt->fetchAll(PDO::FETCH_COLUMN);
-        $html_output = '';
-
-        if (empty($horarios_disponiveis)) {
-            $html_output = '<p>Nenhum horário disponível encontrado para esta data.</p>';
-        } else {
-            // Retorna o HTML dos botões de horário
-            foreach ($horarios_disponiveis as $horario) {
-                $hora_formatada = substr($horario, 0, 5);
-                $html_output .= "<div class='horario-item' data-horario='{$horario}'>{$hora_formatada}</div>";
-            }
-        }
-        return $html_output;
-
-    } catch (PDOException $e) {
-        // Retorna erro no HTML para visualização
-        return '<p style="color: red;">Erro ao executar busca no banco de dados. Tente novamente.</p>';
-    }
+// 2. Buscar todos horários cadastrados do dentista (sem data)
+function buscarTodosHorarios($pdo, $dentista_id) {
+    $sql = "
+        SELECT DISTINCT dd.horario
+        FROM disponibilidade_dentista dd
+        WHERE dd.usuario_id = :dentista_id
+        ORDER BY dd.horario ASC
+    ";
+    $stmt = $pdo->prepare($sql);
+    $stmt->bindParam(':dentista_id', $dentista_id, PDO::PARAM_INT);
+    $stmt->execute();
+    return $stmt->fetchAll(PDO::FETCH_COLUMN);
 }
+
 // ----------------------------------------------------------------------------------
+// Reabastecimento (mantém escolhas após submit com erro ou voltar)
 
-// 3. TRATAMENTO DE VARIÁVEIS DA URL (REABASTECIMENTO)
-
-$horarios_html = '<p>Selecione uma data para ver os horários disponíveis.</p>';
-
-// Coleta dados essenciais para busca
 $data_selecionada = $_GET['data'] ?? '';
 $dentista_selecionado = $_GET['dentista_id'] ?? '';
-// Coleta os IDs dos serviços da URL (Para pré-marcação)
 $servicos_selecionados_get = $_GET['servicos'] ?? [];
-
-// Coleta dados do Passo 3 (Para preenchimento dos textareas)
 $horario_selecionado_get = $_GET['horario'] ?? '';
 $obs_selecionada = $_GET['observacoes'] ?? '';
 $historico_selecionado = $_GET['historico'] ?? '';
 $alergias_selecionadas = $_GET['alergias'] ?? '';
 
-
-if (!empty($data_selecionada) && !empty($dentista_selecionado)) {
-    // Se data e dentista vierem na URL, busca os horários
-    $horarios_html = buscarHorariosHTML($pdo, $dentista_selecionado, $data_selecionada);
-}
-
-
-// 4. OBTENDO DADOS DO BANCO PARA O FORMULÁRIO
 $servicosECategorias = buscarServicosECategorias($pdo);
+$horarios_disponiveis = !empty($dentista_selecionado) 
+    ? buscarTodosHorarios($pdo, $dentista_selecionado)
+    : [];
 
-// Carrega cabeçalho e menu
+// Carrega header
 include 'templates/header.php';
 ?>
 
@@ -150,11 +85,11 @@ include 'templates/header.php';
                 value="<?php echo htmlspecialchars($dentista_selecionado); ?>" 
                 required data-error-message="O dentista deve ser selecionado após a escolha do serviço.">
 
+            <!-- Passo 1 -->
             <div id="passo-1" class="passo-agendamento">
                 <h3 class="subsection-title">Passo 1: Seleção de Serviço</h3>
-
                 <div class="form-group">
-                    <label>Selecione os serviços que deseja agendar (Você pode selecionar mais de um, mas devem ser do **mesmo profissional**):</label>
+                    <label>Selecione os serviços que deseja agendar (devem ser do mesmo profissional):</label>
                     
                     <div class="servicos-list">
                         <?php 
@@ -169,10 +104,8 @@ include 'templates/header.php';
                                     <legend><strong><?php echo htmlspecialchars($categoria_atual); ?></strong></legend>
                             <?php endif; 
                             
-                            // Lógica de Pré-Marcação (Reabastecimento)
                             $servico_id_str = (string)$servico['servico_id'];
                             $checked = in_array($servico_id_str, $servicos_selecionados_get) ? 'checked' : '';
-                            
                             ?>
                             <div class="servico-item">
                                 <input type="checkbox" 
@@ -186,17 +119,15 @@ include 'templates/header.php';
                                     <?= $checked ?>>
                                 <label for="servico_<?php echo $servico['servico_id']; ?>">
                                     <?php echo htmlspecialchars($servico['nome_servico']); ?> 
-                                    (Com Dr(a). <?php echo htmlspecialchars($servico['nome_dentista']); ?> - R$ <?php echo number_format($servico['preco'], 2, ',', '.'); ?>)
+                                    (Com Dr(a). <?php echo htmlspecialchars($servico['nome_dentista']); ?> - 
+                                    R$ <?php echo number_format($servico['preco'], 2, ',', '.'); ?>)
                                 </label>
                             </div>
                         <?php endforeach; ?>
                         </fieldset>
                     </div>
-
-                    <p style="margin-top: 15px;">**O valor final será a soma dos serviços selecionados.**</p>
                 </div>
                 
-                <!-- Input oculto para validação do JS -->
                 <input type="hidden" id="servicos_validacao" data-error-message="Selecione ao menos um serviço." value="">
 
                 <div class="form-group">
@@ -211,7 +142,7 @@ include 'templates/header.php';
                 </div>
             </div>
 
-
+            <!-- Passo 2 -->
             <div id="passo-2" class="passo-agendamento" style="display: none;">
                 <h3 class="subsection-title">Passo 2: Escolha a Data e Horário</h3>
                 <div class="form-grid">
@@ -224,7 +155,17 @@ include 'templates/header.php';
                     <div class="form-group">
                         <label>Horários Disponíveis:</label>
                         <div id="lista-horarios" class="horarios-grid">
-                            <?php echo $horarios_html; ?>
+                            <?php 
+                            if (empty($horarios_disponiveis)) {
+                                echo '<p>Selecione um serviço primeiro para ver os horários.</p>';
+                            } else {
+                                foreach ($horarios_disponiveis as $horario) {
+                                    $hora_formatada = substr($horario, 0, 5);
+                                    $selected_class = ($horario === $horario_selecionado_get) ? 'selected' : '';
+                                    echo "<div class='horario-item {$selected_class}' data-horario='{$horario}'>{$hora_formatada}</div>";
+                                }
+                            }
+                            ?>
                         </div>
                     </div>
 
@@ -239,22 +180,23 @@ include 'templates/header.php';
                 </div>
             </div>
 
+            <!-- Passo 3 -->
             <div id="passo-3" class="passo-agendamento" style="display: none;">
                 <h3 class="subsection-title">Passo 3: Informações Adicionais</h3>
                 <div class="form-group">
-                    <label for="observacoes">Observações sobre a Consulta:</label>
-                    <textarea id="observacoes" name="observacoes" placeholder="Ex: Preferência por anestesia local, dúvidas sobre o procedimento."><?php echo htmlspecialchars($obs_selecionada); ?></textarea>
+                    <label for="observacoes">Observações:</label>
+                    <textarea id="observacoes" name="observacoes"><?php echo htmlspecialchars($obs_selecionada); ?></textarea>
                 </div>
 
-                <h3 class="subsection-title" style="margin-top: 2rem;">Seu Histórico de Saúde (Opcional)</h3>
+                <h3 class="subsection-title" style="margin-top: 2rem;">Histórico de Saúde</h3>
                 <div class="form-grid">
                     <div class="form-group">
-                        <label for="historico">Histórico Odontológico/Médico:</label>
-                        <textarea id="historico" name="historico" placeholder="Informe condições médicas relevantes, cirurgias recentes, ou tratamentos odontológicos anteriores."><?php echo htmlspecialchars($historico_selecionado); ?></textarea>
+                        <label for="historico">Histórico Médico/Odontológico:</label>
+                        <textarea id="historico" name="historico"><?php echo htmlspecialchars($historico_selecionado); ?></textarea>
                     </div>
                     <div class="form-group">
-                        <label for="alergias">Alergias Conhecidas:</label>
-                        <textarea id="alergias" name="alergias" placeholder="Informe alergias a medicamentos, látex, etc."><?php echo htmlspecialchars($alergias_selecionadas); ?></textarea>
+                        <label for="alergias">Alergias:</label>
+                        <textarea id="alergias" name="alergias"><?php echo htmlspecialchars($alergias_selecionadas); ?></textarea>
                     </div>
                 </div>
                 
@@ -263,10 +205,8 @@ include 'templates/header.php';
                     <button type="submit" class="btn-primary">Confirmar Agendamento</button>
                 </div>
             </div>
-
         </form>
     </section>
-
 </main>
 
 <style>
