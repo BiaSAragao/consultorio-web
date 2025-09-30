@@ -63,10 +63,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 inputDentistaSelecionado.value = '';
                 dentistaInfoP.innerHTML = '**Selecione um serviço para ver o profissional responsável.**';
                 inputHorarioSelecionado.value = '';
-                inputServicosValidacao.value = '';
+                inputServicosValidacao.value = '';  // ✅ sem serviço marcado
             } else {
                 inputDentistaSelecionado.value = dentistaAtualSelecionado;
                 dentistaInfoP.innerHTML = `Profissional Escolhido: Dr(a). <strong>${nomeDentista}</strong>`;
+                inputServicosValidacao.value = 'selecionado'; // ✅ adiciona aqui!
             }
         });
     });
