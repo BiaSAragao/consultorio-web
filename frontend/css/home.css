@@ -9,7 +9,7 @@ body {
     display: table;
 }
 
-/* Header */
+
 .header {
     background-color: #c69963e0;
     color: #000;
@@ -22,8 +22,8 @@ body {
 }
 
 .logo {
-    font-size: 1.875rem; /* 3xl */
-    font-weight: 700; /* bold */
+    font-size: 1.875rem; 
+    font-weight: 700; 
 }
 
 .nav {
@@ -41,25 +41,25 @@ body {
 
 .nav-list {
     display: flex;
-    gap: 1.5rem; /* space-x-6 */
+    gap: 1.5rem; 
     list-style: none;
     padding: 0;
 }
 
 .nav-link {
-    font-weight: 600; /* semibold */
+    font-weight: 600; 
     transition: color 0.3s ease;
-    text-decoration: none; /* Remove o sublinhado */
-    color: #000; /* Define a cor do texto para preto */
+    text-decoration: none; 
+    color: #000; 
 }
 
 .nav-link:hover {
     color: #fff;
 }
 
-/* Main Content */
+
 .main-container {
-    max-width: 1280px; /* container mx-auto */
+    max-width: 1280px;
     margin-left: auto;
     margin-right: auto;
     padding-left: 1rem;
@@ -125,21 +125,21 @@ body {
 }
 
 .main-text {
-    color: #374151; /* gray-700 */
-    font-size: 1.125rem; /* lg */
+    color: #374151; 
+    font-size: 1.125rem;
     margin-bottom: 1.5rem;
-    line-height: 1.625; /* leading-relaxed */
+    line-height: 1.625;
 }
 
 .section-title {
     font-size: 1.875rem; /* 3xl */
-    font-weight: 600; /* semibold */
-    color: #1f2937; /* gray-800 */
+    font-weight: 600; 
+    color: #1f2937; 
     margin-bottom: 1rem;
 }
 
 .section-text {
-    color: #374151; /* gray-700 */
+    color: #374151;
     font-size: 1rem;
     line-height: 1.625;
     margin-bottom: 1.5rem;
@@ -376,32 +376,30 @@ body {
         padding: 1.5rem;
     }
 }
-/* --- CSS do Slideshow --- */
 
-/* 1. Estiliza o container principal do slideshow */
 .slideshow-container {
-    position: relative; /* Necessário para posicionar as imagens dentro dele */
+    position: relative; 
     width: 100%;
-    height: 400px; /* Defina uma altura ou use aspect-ratio */
+    height: 400px; 
     border-radius: 0.5rem;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     margin-bottom: 2rem;
-    overflow: hidden; /* Garante que as imagens não "vazem" para fora */
+    overflow: hidden; 
 }
 
-/* 2. Estiliza cada imagem (slide) */
+
 .slideshow-container .slide {
-    position: absolute; /* Coloca todas as imagens umas sobre as outras */
+    position: absolute; 
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    object-fit: cover; /* Garante que a imagem cubra o espaço sem distorcer */
-    opacity: 0; /* Começam invisíveis */
-    animation: fadeShow 16s infinite; /* Aplica a animação com duração total de 16s */
+    object-fit: cover; 
+    opacity: 0;
+    animation: fadeShow 16s infinite; 
 }
 
-/* 3. Define a animação (keyframes) */
+
 @keyframes fadeShow {
     0% { opacity: 0; }
     10% { opacity: 1; } /* Fade in (1.6s) */
@@ -410,18 +408,18 @@ body {
     100% { opacity: 0; }
 }
 
-/* 4. Define um atraso para cada imagem começar a aparecer na hora certa */
+
 .slideshow-container .slide:nth-child(2) {
-    animation-delay: 4s; /* Começa após 4 segundos */
+    animation-delay: 4s;
 }
 .slideshow-container .slide:nth-child(3) {
-    animation-delay: 8s; /* Começa após 8 segundos */
+    animation-delay: 8s;
 }
 .slideshow-container .slide:nth-child(4) {
-    animation-delay: 12s; /* Começa após 12 segundos */
+    animation-delay: 12s; 
 }
 
-/* 5. Ajusta o slideshow para telas maiores, como a imagem original */
+
 @media (min-width: 768px) {
     .slideshow-container {
         width: 50%;
@@ -430,21 +428,21 @@ body {
         margin-left: 2rem;
     }
 }
-/* --- Estilos da Seção de Contatos (Apenas Texto) --- */
+
 
 .contact-text-block {
       margin-top: 2rem; 
     font-size: 1.125rem; 
     line-height: 1.8; 
     color: #374151; 
-    text-align: center; /* Adicione esta linha para centralizar */
+    text-align: center; 
 }
 
 .contact-text-block a {
-    color: inherit; /* Faz o link ter a mesma cor do texto */
-    text-decoration: none; /* Remove o sublinhado */
+    color: inherit; 
+    text-decoration: none; 
 }
 
 .contact-text-block a:hover {
-    text-decoration: underline; /* Adiciona sublinhado ao passar o mouse */
+    text-decoration: underline;
 }

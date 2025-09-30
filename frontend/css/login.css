@@ -1,9 +1,9 @@
 /* --- Estilos para a página de Login --- */
 
-/* --- Geral --- */
+
 body {
     font-family: 'Inter', sans-serif;
-    background-color: #d9d9d9; /* Mesmo fundo da homepage */
+    background-color: #d9d9d9; 
     display: flex;
     justify-content: center;
     align-items: center;
@@ -12,7 +12,7 @@ body {
     padding: 20px;
 }
 
-/* --- Container do Formulário --- */
+
 form {
     background-color: #fff;
     padding: 2.5rem; /* 40px */
@@ -23,7 +23,7 @@ form {
     box-sizing: border-box;
 }
 
-/* --- Título --- */
+
 h1 {
     font-size: 2rem; /* 32px */
     font-weight: 700;
@@ -33,7 +33,6 @@ h1 {
     margin-bottom: 1.5rem; /* 24px */
 }
 
-/* --- Rótulos (Labels) --- */
 label {
     display: block;
     font-size: 0.875rem; /* 14px */
@@ -42,7 +41,7 @@ label {
     margin-bottom: 0.5rem; /* 8px */
 }
 
-/* --- Campos de Entrada (Inputs) --- */
+
 input[type="email"],
 input[type="password"],
 input[type="text"] {
@@ -52,7 +51,7 @@ input[type="text"] {
     border-radius: 6px;
     font-size: 1rem;
     box-sizing: border-box;
-    margin-bottom: 1rem; /* Espaço abaixo de cada input */
+    margin-bottom: 1rem; 
     transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
@@ -63,13 +62,13 @@ input:focus {
 }
 
 
-/* --- Botão de Envio --- */
+
 button[type="submit"] {
     width: 100%;
-    padding: 0.875rem; /* 14px */
+    padding: 0.875rem; 
     border: none;
-    border-radius: 9999px; /* Formato de pílula */
-    background-color: #cab078; /* Cor principal */
+    border-radius: 9999px; 
+    background-color: #cab078; 
     color: #fff;
     font-size: 1rem;
     font-weight: 700;
@@ -79,15 +78,15 @@ button[type="submit"] {
 }
 
 button[type="submit"]:hover {
-    background-color: #a68c5b; /* Tom mais escuro */
+    background-color: #a68c5b; 
 }
 
-/* --- Link para Cadastro --- */
+
 .cadastro-link, .login-link {
     text-align: center;
-    margin-top: 1.5rem; /* 24px */
-    font-size: 0.875rem; /* 14px */
-    color: #4b5563; /* Cinza médio */
+    margin-top: 1.5rem; 
+    font-size: 0.875rem; 
+    color: #4b5563; 
 }
 
 .cadastro-link a, .login-link a {
@@ -100,7 +99,7 @@ button[type="submit"]:hover {
     text-decoration: underline;
 }
 
-/* --- Mensagem de Erro --- */
+
 .erro {
     color: #D8000C;
     background-color: #FFBABA;

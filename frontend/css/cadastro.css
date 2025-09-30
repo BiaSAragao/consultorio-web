@@ -1,7 +1,7 @@
 /* --- Estilos para a página de Cadastro --- */
-/* OS ESTILOS SÃO OS MESMOS DA PÁGINA DE LOGIN PARA MANTER A CONSISTÊNCIA */
 
-/* --- Geral --- */
+
+
 body {
     font-family: 'Inter', sans-serif;
     background-color: #d9d9d9;
@@ -13,7 +13,7 @@ body {
     padding: 20px;
 }
 
-/* --- Container do Formulário --- */
+
 form {
     background-color: #fff;
     padding: 2.5rem;
@@ -24,7 +24,7 @@ form {
     box-sizing: border-box;
 }
 
-/* --- Título --- */
+
 h1 {
     font-size: 2rem;
     font-weight: 700;
@@ -34,7 +34,7 @@ h1 {
     margin-bottom: 1.5rem;
 }
 
-/* --- Rótulos (Labels) --- */
+
 label {
     display: block;
     font-size: 0.875rem;
@@ -43,12 +43,11 @@ label {
     margin-bottom: 0.5rem;
 }
 
-/* --- Campos de Entrada (Inputs) --- */
 input[type="email"],
 input[type="password"],
 input[type="text"],
-input[type="tel"], /* <-- Adicione esta linha */
-input[type="date"] /* <-- Adicione esta também */ {
+input[type="tel"], 
+input[type="date"]  {
     width: 100%;
     padding: 0.75rem;
     border: 1px solid #ccc;
@@ -65,7 +64,7 @@ input:focus {
     box-shadow: 0 0 0 3px rgba(202, 176, 120, 0.3);
 }
 
-/* --- Botão de Envio --- */
+
 button[type="submit"] {
     width: 100%;
     padding: 0.875rem;

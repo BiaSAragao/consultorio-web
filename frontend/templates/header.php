@@ -26,10 +26,10 @@
         <nav class="nav">
             <ul class="nav-list">
                 <?php
-                // Verifica se há um usuário logado
+                
                 if (isset($_SESSION['usuario_id'])):
                     $nome_usuario = $_SESSION['usuario_nome'];
-                    $tipo_usuario = $_SESSION['tipo_usuario'] ?? 'paciente'; // Padrão é paciente
+                    $tipo_usuario = $_SESSION['tipo_usuario'] ?? 'paciente'; 
 
                     // --- MENU DO DENTISTA ---
                     if ($tipo_usuario === 'dentista'):

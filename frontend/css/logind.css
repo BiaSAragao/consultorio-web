@@ -1,9 +1,9 @@
 /* --- Estilos para a página de Login do Dentista --- */
 
-/* --- Geral --- */
+
 body {
     font-family: 'Inter', sans-serif;
-    background-color: #d9d9d9; /* Mesmo fundo da homepage */
+    background-color: #d9d9d9; 
     margin: 0;
     padding: 20px;
     display: flex;
@@ -12,7 +12,7 @@ body {
     min-height: 100vh;
 }
 
-/* --- Container Principal --- */
+
 .main-container {
     width: 100%;
     max-width: 1280px;
@@ -24,12 +24,12 @@ body {
     padding: 10rem 10rem;
     border-radius: 0.75rem;
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-    max-width: 800px; /* Largura do card */
+    max-width: 800px; 
     margin: auto;
     box-sizing: border-box;
 }
 
-/* --- Textos (Títulos e Parágrafos) --- */
+
 .section-title-alt {
     font-size: 2rem;
     font-weight: 700;
@@ -49,9 +49,8 @@ body {
     margin: 0 auto 1.5rem auto;
 }
 
-/* --- Formulário --- */
 .form-group {
-    margin-bottom: 1.5rem; /* Espaço entre os campos */
+    margin-bottom: 1.5rem; 
 }
 
 .form-group label {
@@ -78,7 +77,7 @@ body {
     box-shadow: 0 0 0 3px rgba(202, 176, 120, 0.3);
 }
 
-/* --- Botão --- */
+
 .btn-primary {
     width: 100%;
     padding: 0.875rem;
@@ -97,7 +96,7 @@ body {
     background-color: #a68c5b;
 }
 
-/* --- Mensagem de Erro --- */
+
 .erro {
     color: #D8000C;
     background-color: #FFBABA;
