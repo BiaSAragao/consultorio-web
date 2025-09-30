@@ -16,7 +16,7 @@ if ($_SERVER["REQUEST_METHOD"] !== "POST") {
 try {
     // 1. COLETA E NORMALIZAÇÃO DOS DADOS
     $data = $_POST["data"] ?? null; 
-    $hora = $_POST["horario_selecionado"] ?? null; // ajustado
+    $hora = $_POST["horario"] ?? null; // ajustado
     $servicos = $_POST["servicos"] ?? [];
     
     // Captura o dentista (fixo) do formulário
