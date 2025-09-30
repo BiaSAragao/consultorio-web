@@ -156,9 +156,6 @@ include 'templates/header.php';
 
                 <div class="form-group">
                     <label>Selecione os serviços que deseja agendar (Você pode selecionar mais de um, mas devem ser do **mesmo profissional**):</label>
-                    <input type="hidden" name="servicos_validacao" id="servicos_validacao" 
-                        value="<?php echo !empty($servicos_selecionados_get) ? 'selecionado' : ''; ?>"
-                        required data-error-message="Selecione ao menos um serviço para continuar.">
                     
                     <div class="servicos-list">
                         <?php 

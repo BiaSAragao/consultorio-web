@@ -9,10 +9,10 @@
     
     <title><?php echo isset($titulo_pagina) ? $titulo_pagina : 'SmileUp Odontologia'; ?></title>
     
-    <link rel="stylesheet" href="css/home.css">
+    <link rel="stylesheet" href="/consultorio-web/frontend/css/home.css">
     
     <?php if (isset($is_dashboard) && $is_dashboard): ?>
-        <link rel="stylesheet" href="/frontend/css/dashboard.css">
+        <link rel="stylesheet" href="/consultorio-web/frontend/css/dashboard.css">
     <?php endif; ?>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">

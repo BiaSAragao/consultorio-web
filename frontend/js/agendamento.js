@@ -8,8 +8,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const dentistaInfoP = document.getElementById('dentista_info'); 
     const inputData = document.getElementById('data');
     const inputHorarioSelecionado = document.getElementById('horario_selecionado');
-    const inputServicosValidacao = document.getElementById('servicos_validacao');
     
+    // Campos adicionais (Passo 3)
     const obsTextarea = document.getElementById('observacoes');
     const historicoTextarea = document.getElementById('historico');
     const alergiasTextarea = document.getElementById('alergias');
@@ -19,16 +19,13 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // --- FUNÇÃO PARA LIGAR OS EVENTOS DE CLIQUE DOS HORÁRIOS ---
     function ligarEventosHorarios() {
-        // Pega o valor do horário que veio na URL para pré-selecionar
         const horarioGet = inputHorarioSelecionado.value; 
 
         document.querySelectorAll('.horario-item').forEach(btnHorario => {
-            // Pré-seleciona se o valor da URL for igual ao horário do botão
             if (horarioGet && btnHorario.dataset.horario === horarioGet) {
                  btnHorario.classList.add('selected');
             }
 
-            // Liga o evento de clique uma única vez
             if (btnHorario.dataset.listener !== 'true') {
                 btnHorario.addEventListener('click', function() {
                     document.querySelectorAll('.horario-item.selected').forEach(btn => btn.classList.remove('selected'));
@@ -49,14 +46,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const nomeDentista = primeiroServico.dataset.dentistaNome;
             const dentistaId = primeiroServico.dataset.dentistaId;
             
-            // **CORREÇÃO CRÍTICA AQUI:**
-            // 1. Atualiza o valor do campo oculto de validação.
-            inputServicosValidacao.value = 'selecionado'; 
-            
-            // 2. Atualiza o estado visual e variáveis
+            // Atualiza o estado visual e variáveis
             dentistaAtualSelecionado = dentistaId; 
             inputDentistaSelecionado.value = dentistaId;
             dentistaInfoP.innerHTML = `Profissional Escolhido: Dr(a). **${nomeDentista}**`;
+            
+            // Não precisamos mais do inputServicosValidacao aqui!
 
             // Verifica se deve avançar o passo
             const hash = window.location.hash;
@@ -69,12 +64,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 irParaPasso(1);
             }
         } else {
-            // Garante que o passo 1 é exibido se nada estiver selecionado
-            inputServicosValidacao.value = ''; // Garante que a validação falhe se não houver serviços
+             // Garante que o passo 1 é exibido se nada estiver selecionado
             irParaPasso(1); 
         }
 
-        // Liga os listeners dos botões de horário, incluindo a pré-seleção
         ligarEventosHorarios();
     }
     
@@ -106,18 +99,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 inputDentistaSelecionado.value = '';
                 dentistaInfoP.innerHTML = '**Selecione um serviço para ver o profissional responsável.**';
                 inputHorarioSelecionado.value = '';
-                inputServicosValidacao.value = '';
                 // Recarrega sem dados (apenas para limpar a URL)
                 window.location.href = `agendar_consulta.php#passo-1`; 
             } else {
                 inputDentistaSelecionado.value = dentistaAtualSelecionado;
-                
-                // Se o dentista mudar e a data já estiver preenchida, força a recarga para buscar novos horários
+                dentistaInfoP.innerHTML = `Profissional Escolhido: Dr(a). **${nomeDentista}**`;
+
+                // Se a data já estiver preenchida, força a recarga para buscar novos horários
                 if (inputData.value) {
                     const data = inputData.value;
                     const dentistaId = dentistaAtualSelecionado;
                     
-                    // COLETAR TODOS OS DADOS NOVAMENTE PARA RECARGA
                     const servicosSelecionados = servicosMarcados
                         .map(cb => `servicos[]=${cb.value}`)
                         .join('&');
@@ -136,18 +128,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     url += `#passo-2`;
                     
                     window.location.href = url;
-                } else {
-                     // Apenas atualiza o nome do dentista no Passo 1
-                    dentistaInfoP.innerHTML = `Profissional Escolhido: Dr(a). **${nomeDentista}**`;
                 }
             }
         });
     });
 
-    // --- EVENTO DE SELEÇÃO DE DATA (AGORA RECARREGA A PÁGINA COM TODOS OS DADOS) ---
+    // --- EVENTO DE SELEÇÃO DE DATA ---
     if(inputData) {
         inputData.addEventListener('change', function() {
-            // ... (Verificação de data passada mantida)
             const dataSelecionada = new Date(this.value + "T00:00:00");
             const hoje = new Date();
             hoje.setHours(0, 0, 0, 0);
@@ -176,17 +164,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 // 2. MONTAR A URL COM TODOS OS PARÂMETROS
                 let url = `agendar_consulta.php?dentista_id=${dentistaId}&data=${data}`;
 
-                // Adiciona os serviços
                 if (servicosSelecionados) {
                     url += `&${servicosSelecionados}`;
                 }
                 
-                // Adiciona os campos adicionais SE estiverem preenchidos
                 if (obs) url += `&observacoes=${encodeURIComponent(obs)}`;
                 if (historico) url += `&historico=${encodeURIComponent(historico)}`;
                 if (alergias) url += `&alergias=${encodeURIComponent(alergias)}`;
                 
-                // Adiciona a âncora para ir ao passo 2
                 url += `#passo-2`;
                 
                 window.location.href = url;
@@ -198,11 +183,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Chama a função de inicialização para definir o estado inicial após o DOM carregar
     inicializarEstadoFormulario(); 
 });
 
-// --- FUNÇÕES DE NAVEGAÇÃO DE PASSOS (Mantidas) ---
+// --- FUNÇÕES DE NAVEGAÇÃO DE PASSOS ---
+
+// A função de navegação precisa estar no escopo global ou ser definida como 'window.irParaPasso'
 function irParaPasso(numeroPasso) {
     document.querySelectorAll('.passo-agendamento').forEach(passo => {
         passo.style.display = 'none';
@@ -213,24 +199,27 @@ function irParaPasso(numeroPasso) {
     }
 }
 
+// A função de validação precisa estar no escopo global
 function validarEPularPasso(passoAtual, proximoPasso) {
     let valido = true;
     
     if (passoAtual === 1) {
-        const inputServicosValidacao = document.getElementById('servicos_validacao');
+        const checkboxesServicos = document.querySelectorAll('input[name="servicos[]"]');
+        const servicosMarcados = Array.from(checkboxesServicos).filter(cb => cb.checked);
         const inputDentistaSelecionado = document.getElementById('dentista_selecionado');
         
-        if (inputServicosValidacao.value !== 'selecionado') {
-            alert(inputServicosValidacao.dataset.errorMessage);
+        // CORREÇÃO: Verifica se há pelo menos um serviço marcado E se o dentista foi definido.
+        if (servicosMarcados.length === 0) {
+            alert('Selecione ao menos um serviço para continuar.');
             valido = false;
         } else if (!inputDentistaSelecionado.value) {
-            alert(document.getElementById('dentista_selecionado').dataset.errorMessage);
+            alert('O dentista deve ser selecionado após a escolha do serviço.');
             valido = false;
         }
     } else if (passoAtual === 2) {
         const inputData = document.getElementById('data');
         const inputHorarioSelecionado = document.getElementById('horario_selecionado');
-        // A validação se a data e o horário foram selecionados
+        
         if (!inputData.value || !inputHorarioSelecionado.value) {
             alert('Selecione uma data e um horário disponível.');
             valido = false;
