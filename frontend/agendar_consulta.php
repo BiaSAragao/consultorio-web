@@ -151,7 +151,6 @@ include 'templates/header.php';
                 required data-error-message="O dentista deve ser selecionado após a escolha do serviço.">
 
             <div id="passo-1" class="passo-agendamento">
-                
                 <h3 class="subsection-title">Passo 1: Seleção de Serviço</h3>
 
                 <div class="form-group">
@@ -177,24 +176,29 @@ include 'templates/header.php';
                             ?>
                             <div class="servico-item">
                                 <input type="checkbox" 
-                                       id="servico_<?php echo $servico['servico_id']; ?>" 
-                                       name="servicos[]" 
-                                       value="<?php echo $servico['servico_id']; ?>" 
-                                       data-preco="<?php echo $servico['preco']; ?>"
-                                       data-categoria-id="<?php echo $servico['categoria_id']; ?>" 
-                                       data-dentista-id="<?php echo $servico['dentista_id']; ?>"
-                                       data-dentista-nome="<?php echo htmlspecialchars($servico['nome_dentista']); ?>"
-                                       <?= $checked ?>>
+                                    id="servico_<?php echo $servico['servico_id']; ?>" 
+                                    name="servicos[]" 
+                                    value="<?php echo $servico['servico_id']; ?>" 
+                                    data-preco="<?php echo $servico['preco']; ?>"
+                                    data-categoria-id="<?php echo $servico['categoria_id']; ?>" 
+                                    data-dentista-id="<?php echo $servico['dentista_id']; ?>"
+                                    data-dentista-nome="<?php echo htmlspecialchars($servico['nome_dentista']); ?>"
+                                    <?= $checked ?>>
                                 <label for="servico_<?php echo $servico['servico_id']; ?>">
                                     <?php echo htmlspecialchars($servico['nome_servico']); ?> 
                                     (Com Dr(a). <?php echo htmlspecialchars($servico['nome_dentista']); ?> - R$ <?php echo number_format($servico['preco'], 2, ',', '.'); ?>)
                                 </label>
                             </div>
                         <?php endforeach; ?>
-                        </fieldset> </div>
+                        </fieldset>
+                    </div>
+
                     <p style="margin-top: 15px;">**O valor final será a soma dos serviços selecionados.**</p>
                 </div>
                 
+                <!-- Input oculto para validação do JS -->
+                <input type="hidden" id="servicos_validacao" data-error-message="Selecione ao menos um serviço." value="">
+
                 <div class="form-group">
                     <label for="dentista_info">Profissional Escolhido:</label>
                     <p id="dentista_info" style="padding: 10px; border: 1px solid #ccc; background-color: #f8f9fa; border-radius: 4px;">
@@ -206,6 +210,7 @@ include 'templates/header.php';
                     <button type="button" class="btn-primary" onclick="validarEPularPasso(1, 2)">Continuar</button>
                 </div>
             </div>
+
 
             <div id="passo-2" class="passo-agendamento" style="display: none;">
                 <h3 class="subsection-title">Passo 2: Escolha a Data e Horário</h3>
