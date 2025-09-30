@@ -20,6 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             // Login bem-sucedido
             $_SESSION['usuario_id'] = $usuario['usuario_id'];
             $_SESSION['usuario_nome'] = $usuario['nome'];
+            $_SESSION['tipo_usuario'] = 'paciente';
 
             header("Location: dashboard-paciente.php");
             exit();
