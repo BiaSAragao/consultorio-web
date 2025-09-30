@@ -93,7 +93,8 @@ try {
 
 } catch (PDOException $e) {
     // Se ocorrer um erro PDO, define a mensagem de erro e garante que $dados_paciente está vazio para evitar erros posteriores
-    $erro_db = "Erro de comunicação com o sistema ao carregar a ficha. Por favor, tente novamente.";
+    // ISSO MOSTRARÁ O ERRO DETALHADO DO BANCO DE DADOS (APENAS PARA DEBUG)
+    $erro_db = "Erro de DB: " . $e->getMessage();
     $dados_paciente = []; 
 }
 
