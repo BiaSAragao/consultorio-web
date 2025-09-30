@@ -40,7 +40,7 @@ try {
     $sql_dados_paciente = "
         SELECT 
             u.nome, u.tel AS telefone, u.email, 
-            p.cpf, p.plano_saude, p.data_nascimento
+            p.cpf, p.plano, p.data_nascimento
         FROM Usuario u
         JOIN Paciente p ON u.usuario_id = p.usuario_id
         WHERE u.usuario_id = :id_paciente
