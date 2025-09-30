@@ -92,7 +92,7 @@ include '../frontend/templates/header.php';
                                 <td><?php echo htmlspecialchars($paciente['nome']); ?></td>
                                 <td><?php echo htmlspecialchars($paciente['telefone']); ?></td>
                                 <td>
-                                    <a href="ficha-paciente.php?id=<?php echo $id_do_paciente; ?>">Ver Ficha</a>
+                                    <a href="ficha-paciente.php?id=<?php echo $paciente['id']; ?>" class="btn-tabela btn-secondary">Ver Ficha</a>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
