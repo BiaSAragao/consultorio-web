@@ -17,38 +17,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             $pdo->beginTransaction();
 
-            // 1️⃣ Excluir serviços relacionados às consultas agendadas
+            // 1️⃣ Excluir serviços relacionados às consultas do paciente
             $stmt_cs = $pdo->prepare("
                 DELETE FROM Consulta_servico 
                 WHERE consulta_id IN (
                     SELECT consulta_id FROM Consulta 
-                    WHERE usuario_paciente = ? AND status = 'agendado'
+                    WHERE usuario_paciente = ?
                 )
             ");
             $stmt_cs->execute([$usuario_id]);
 
-            // 2️⃣ Excluir itens de estoque relacionados às consultas agendadas
+            // 2️⃣ Excluir itens de estoque relacionados às consultas do paciente
             $stmt_ce = $pdo->prepare("
                 DELETE FROM Consulta_estoque 
                 WHERE consulta_id IN (
                     SELECT consulta_id FROM Consulta 
-                    WHERE usuario_paciente = ? AND status = 'agendado'
+                    WHERE usuario_paciente = ?
                 )
             ");
             $stmt_ce->execute([$usuario_id]);
 
-            // 3️⃣ Excluir as consultas agendadas
+            // 3️⃣ Excluir todas as consultas do paciente
             $stmt_c = $pdo->prepare("
                 DELETE FROM Consulta 
-                WHERE usuario_paciente = ? AND status = 'agendado'
+                WHERE usuario_paciente = ?
             ");
             $stmt_c->execute([$usuario_id]);
 
-            // 4️⃣ Excluir o paciente
+            // 4️⃣ Excluir paciente
             $stmt_paciente = $pdo->prepare("DELETE FROM Paciente WHERE usuario_id = ?");
             $stmt_paciente->execute([$usuario_id]);
 
-            // 5️⃣ Excluir o usuário
+            // 5️⃣ Excluir usuário
             $stmt_usuario = $pdo->prepare("DELETE FROM Usuario WHERE usuario_id = ?");
             $stmt_usuario->execute([$usuario_id]);
 
@@ -96,6 +96,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 text-align: center;
                 margin-bottom: 15px;
             }
+            button {
+                padding: 10px 20px;
+                margin: 5px;
+                cursor: pointer;
+            }
+            button.confirm {
+                background-color: red;
+                color: white;
+                border: none;
+            }
+            button.cancel {
+                background-color: gray;
+                color: white;
+                border: none;
+            }
         </style>
     </head>
     <body>
@@ -106,13 +121,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <?php if ($sucesso) echo "<div class='sucesso-js'>$sucesso</div>"; ?>
 
             <p>Tem certeza de que deseja excluir sua conta?<br>
-            Todas as consultas com status <strong>agendado</strong> serão excluídas.<br>
-            Consultas já realizadas permanecerão no sistema como histórico.</p>
+            Todas as suas consultas serão excluídas permanentemente.</p>
 
-            <button type="submit" name="confirmar" value="sim" style="background-color:red;color:white;">
+            <button type="submit" name="confirmar" value="sim" class="confirm">
                 Sim, excluir minha conta
             </button>
-            <button type="submit" name="confirmar" value="nao">
+            <button type="submit" name="confirmar" value="nao" class="cancel">
                 Não, cancelar
             </button>
         </form>
