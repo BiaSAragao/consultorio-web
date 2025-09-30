@@ -58,20 +58,20 @@ try {
         exit();
     }
     
-    // B. HISTÓRICO DE CONSULTAS (CORRIGIDO PARA AGRUPAR SERVIÇOS)
     $sql_historico = "
         SELECT 
             c.data, 
             c.status,
-            -- Agrupa todos os nomes de serviço em uma única string, separados por vírgula
-            GROUP_CONCAT(s.nome_servico SEPARATOR ', ') AS procedimentos 
+            -- Substituído GROUP_CONCAT(x SEPARATOR y) por STRING_AGG(x, y)
+            STRING_AGG(s.nome_servico, ', ') AS procedimentos 
         FROM Consulta c
         JOIN Consulta_Servico cs ON c.consulta_id = cs.consulta_id
         JOIN Servico s ON cs.servico_id = s.servico_id
         WHERE c.usuario_paciente = :id_paciente
-        GROUP BY c.consulta_id, c.data, c.status -- Agrupa pela consulta para evitar linhas duplicadas
+        GROUP BY c.consulta_id, c.data, c.status
         ORDER BY c.data DESC
     ";
+// ... o restante do bloco try continua ...
     $stmt_historico = $pdo->prepare($sql_historico);
     $stmt_historico->execute([':id_paciente' => $id_paciente]);
     $historico_consultas = $stmt_historico->fetchAll(PDO::FETCH_ASSOC);

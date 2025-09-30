@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const inputHorarioSelecionado = document.getElementById('horario_selecionado');
     const inputServicosValidacao = document.getElementById('servicos_validacao');
 
-    let dentistaAtualSelecionado = inputDentistaSelecionado.value || null;
+    let dentistaAtualSelecionado = null;
 
     // --- Ativar clique nos horários ---
     function inicializarHorarios() {
@@ -16,26 +16,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 inputHorarioSelecionado.value = this.dataset.horario;
             });
         });
-    }
-
-    // --- Estado inicial ---
-    function inicializarEstadoFormulario() {
-        const servicosMarcados = Array.from(checkboxesServicos).filter(cb => cb.checked);
-        if (servicosMarcados.length > 0) {
-            const primeiroServico = servicosMarcados[0];
-            const nomeDentista = primeiroServico.dataset.dentistaNome;
-            const dentistaId = primeiroServico.dataset.dentistaId;
-
-            inputServicosValidacao.value = 'selecionado'; 
-            dentistaAtualSelecionado = dentistaId; 
-            inputDentistaSelecionado.value = dentistaId;
-            dentistaInfoP.innerHTML = `Profissional Escolhido: Dr(a). <strong>${nomeDentista}</strong>`;
-        } else {
-            inputServicosValidacao.value = '';
-            dentistaInfoP.innerHTML = '**Selecione um serviço para ver o profissional responsável.**';
-        }
-
-        inicializarHorarios();
     }
 
     // --- Restringir serviços a um dentista ---
@@ -63,11 +43,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 inputDentistaSelecionado.value = '';
                 dentistaInfoP.innerHTML = '**Selecione um serviço para ver o profissional responsável.**';
                 inputHorarioSelecionado.value = '';
-                inputServicosValidacao.value = '';  // ✅ sem serviço marcado
+                inputServicosValidacao.value = '';
             } else {
                 inputDentistaSelecionado.value = dentistaAtualSelecionado;
                 dentistaInfoP.innerHTML = `Profissional Escolhido: Dr(a). <strong>${nomeDentista}</strong>`;
-                inputServicosValidacao.value = 'selecionado'; // ✅ adiciona aqui!
+                inputServicosValidacao.value = 'selecionado';
             }
         });
     });
@@ -101,5 +81,5 @@ document.addEventListener('DOMContentLoaded', () => {
         if (valido) irParaPasso(proximoPasso);
     };
 
-    inicializarEstadoFormulario();
+    inicializarHorarios();
 });
